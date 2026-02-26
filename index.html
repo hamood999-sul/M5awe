@@ -90,7 +90,8 @@
     <div id="modal" class="hidden fixed inset-0 bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-6 z-[100]">
         <div class="bg-white p-7 rounded-[35px] w-full max-w-sm">
             <h3 id="p-name" class="font-black text-lg mb-4 text-center text-slate-800">جاري التحليل...</h3>
-            <input type="number" id="amount-input" class="w-full border-2 border-slate-100 p-4 rounded-2xl mb-6 text-center text-3xl outline-none focus:border-blue-500" placeholder="الكمية">
+            <div id="p-stats" class="text-center text-xs text-gray-500 mb-4"></div>
+            <input type="number" id="amount-input" class="w-full border-2 border-slate-100 p-4 rounded-2xl mb-6 text-center text-3xl outline-none focus:border-blue-500" placeholder="الكمية (غرام)">
             <button onclick="saveMeal()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg">تأكيد الإضافة</button>
             <button onclick="closeModal()" class="w-full text-slate-400 mt-4 text-sm font-bold">إلغاء</button>
         </div>
@@ -105,15 +106,50 @@
 
         let currentSelectedDate = new Date().toISOString().split('T')[0];
         let tempProd = {};
-        let clickTimer = null; // متغير للمؤقت
+        let clickTimer = null;
 
         const MY_SUPPS = ["فيتامين C", "امينو 2222", "Mk-677", "ماغنيسيوم", "اوميجا 3", "D3+K2", "كرياتين"];
         const MY_WORKOUTS = ["Push", "Pull", "Leg", "صدر + تراي", "ضهر + باي", "اكتاف", "كارديو", "راحة"];
 
         document.getElementById('date-picker').value = currentSelectedDate;
 
+        // دالة جلب معلومات المنتج من الباركود (تدعم المنتجات الألمانية بقوة)
+        function fetchProductInfo(barcode) {
+            stopScanner();
+            document.getElementById('p-name').innerText = "جاري البحث...";
+            document.getElementById('p-stats').innerText = "";
+            showModal();
+
+            fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 1) {
+                        const product = data.product;
+                        const nut = product.nutriments;
+                        
+                        // تخزين البيانات (لكل 100 غرام)
+                        tempProd = {
+                            name: product.product_name || "منتج غير معروف",
+                            cal100: nut['energy-kcal_100g'] || 0,
+                            prot100: nut['proteins_100g'] || 0,
+                            carb100: nut['carbohydrates_100g'] || 0,
+                            fat100: nut['fat_100g'] || 0
+                        };
+
+                        document.getElementById('p-name').innerText = tempProd.name;
+                        document.getElementById('p-stats').innerText = 
+                            `سعرات: ${tempProd.cal100} | بروتين: ${tempProd.prot100}غ (لكل 100غ)`;
+                    } else {
+                        document.getElementById('p-name').innerText = "المنتج غير موجود!";
+                        document.getElementById('p-stats').innerText = "حاول الإضافة يدوياً";
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('p-name').innerText = "خطأ في الاتصال!";
+                });
+        }
+
         function renderLists() {
-            // رندر المفضلات مع نظام النقرة المزدوجة المحسن
             const fContainer = document.getElementById('fav-foods-container');
             fContainer.innerHTML = myFavFoods.length ? '' : '<span class="text-gray-300 text-[10px]">أضف أكلة يدوية لتظهر هنا..</span>';
             
@@ -122,26 +158,21 @@
                 btn.className = 'fav-food-btn';
                 btn.innerText = food.name;
                 
-                // حل مشكلة التداخل بين النقرة الواحدة والنقرتين
                 btn.onclick = (e) => {
                     if (clickTimer == null) {
-                        // النقرة الأولى: نبدأ المؤقت
                         clickTimer = setTimeout(() => {
                             clickTimer = null;
-                            addFavFood(index); // تنفيذ الإضافة بعد التأكد أنها ليست نقرة مزدوجة
-                        }, 300); // ننتظر 300 جزء من الثانية
+                            addFavFood(index);
+                        }, 300);
                     } else {
-                        // النقرة الثانية قبل انتهاء المؤقت: نقرة مزدوجة
                         clearTimeout(clickTimer);
                         clickTimer = null;
-                        removeFavFood(index); // تنفيذ الحذف
+                        removeFavFood(index);
                     }
                 };
-
                 fContainer.appendChild(btn);
             });
 
-            // رندر المكملات والتمارين
             renderSuppsAndWorkouts();
         }
 
@@ -174,6 +205,7 @@
             const food = myFavFoods[index];
             tempProd = food;
             document.getElementById('p-name').innerText = food.name;
+            document.getElementById('p-stats').innerText = `سعرات: ${food.cal100} (لكل 100غ)`;
             showModal();
         }
 
@@ -254,7 +286,6 @@
             renderLists();
         }
 
-        // دوال مساعدة
         function toggleWorkout(name) {
             if (!workoutsDone[currentSelectedDate]) workoutsDone[currentSelectedDate] = [];
             const idx = workoutsDone[currentSelectedDate].indexOf(name);
@@ -278,7 +309,7 @@
             document.getElementById('scanner-section').classList.remove('hidden');
             Quagga.init({
                 inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { facingMode: "environment" } },
-                decoder: { readers: ["ean_reader", "ean_8_reader"] }
+                decoder: { readers: ["ean_reader", "ean_8_reader", "upc_reader", "code_128_reader"] }
             }, (err) => { if(!err) Quagga.start(); });
             Quagga.onDetected(d => { if(navigator.vibrate) navigator.vibrate(100); fetchProductInfo(d.codeResult.code); });
         }
@@ -293,3 +324,5 @@
 
         updateUI();
     </script>
+</body>
+</html>
