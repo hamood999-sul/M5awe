@@ -3,119 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تطبيقي الرياضي المتكامل</title>
+    <title>مدربي الرياضي - نسخة الـ HD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #f0f4f8; }
         .card { background: white; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
-        .macro-card { border-radius: 15px; padding: 10px; text-align: center; flex: 1; }
-        #scanner-wrap { width: 100%; max-width: 400px; margin: 0 auto; overflow: hidden; border-radius: 20px; border: 4px solid #3b82f6; height: 180px; position: relative; background: #000; }
+        /* تحسين إطار الكاميرا */
+        #scanner-wrap { 
+            width: 100%; 
+            max-width: 400px; 
+            margin: 0 auto; 
+            overflow: hidden; 
+            border-radius: 20px; 
+            border: 4px solid #3b82f6; 
+            height: 220px; 
+            position: relative; 
+            background: #000; 
+        }
         #interactive video { width: 100%; height: 100%; object-fit: cover; }
+        /* خط الليزر للمسح */
+        .laser {
+            position: absolute; top: 50%; left: 0; right: 0; height: 2px;
+            background: rgba(255, 0, 0, 0.5); box-shadow: 0 0 10px red;
+            animation: scanning 2s infinite; z-index: 10;
+        }
+        @keyframes scanning { 0% { top: 20%; } 50% { top: 80%; } 100% { top: 20%; } }
     </style>
 </head>
 <body class="p-4 pb-20">
 
     <div class="card p-6 mb-4 border-t-8 border-blue-600">
         <div class="flex justify-between items-center mb-4">
-            <input type="date" id="date-picker" onchange="changeDate()" class="bg-gray-100 rounded-lg px-2 py-1 text-xs font-bold outline-none">
-            <button onclick="editGoals()" class="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold">تعديل الأهداف ⚙️</button>
+            <input type="date" id="date-picker" onchange="changeDate()" class="bg-gray-100 rounded-lg px-2 py-1 text-xs font-bold">
+            <button onclick="editGoals()" class="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold">الأهداف ⚙️</button>
         </div>
-
-        <div class="text-center mb-6">
-            <span class="text-gray-400 text-xs block">السعرات المستهلكة</span>
-            <div class="text-5xl font-black text-slate-800"><span id="total-calories">0</span></div>
+        <div class="text-center mb-4">
+            <div class="text-4xl font-black text-slate-800"><span id="total-calories">0</span> <small class="text-sm text-gray-400">سعرة</small></div>
         </div>
-
-        <div class="flex gap-3">
-            <div class="macro-card bg-orange-50 text-orange-600 border border-orange-100">
-                <div class="text-[10px] font-bold uppercase">بروتين</div>
-                <div class="font-black"><span id="total-protein">0</span>g</div>
-            </div>
-            <div class="macro-card bg-blue-50 text-blue-600 border border-blue-100">
-                <div class="text-[10px] font-bold uppercase">كربوهيدرات</div>
-                <div class="font-black"><span id="total-carbs">0</span>g</div>
-            </div>
-            <div class="macro-card bg-yellow-50 text-yellow-700 border border-yellow-100">
-                <div class="text-[10px] font-bold uppercase">دهون</div>
-                <div class="font-black"><span id="total-fat">0</span>g</div>
-            </div>
+        <div class="flex gap-2">
+            <div class="flex-1 bg-orange-50 p-2 rounded-xl text-center"><small class="block text-[10px]">بروتين</small><b id="total-protein">0</b>g</div>
+            <div class="flex-1 bg-blue-50 p-2 rounded-xl text-center"><small class="block text-[10px]">كربوهيدرات</small><b id="total-carbs">0</b>g</div>
+            <div class="flex-1 bg-yellow-50 p-2 rounded-xl text-center"><small class="block text-[10px]">دهون</small><b id="total-fat">0</b>g</div>
         </div>
     </div>
 
-    <div id="scanner-section" class="hidden mb-4 animate-bounce-in">
+    <div id="scanner-section" class="hidden mb-4">
         <div id="scanner-wrap">
             <div id="interactive" class="viewport"></div>
-            <button onclick="stopScanner()" class="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full font-bold z-50">✕</button>
+            <div class="laser"></div>
+            <button onclick="stopScanner()" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full font-bold z-[60]">✕</button>
         </div>
+        <p class="text-center text-[10px] text-gray-500 mt-2 font-bold">نصيحة: ابعد الهاتف حوالي 15 سم عن الباركود</p>
     </div>
 
-    <div class="grid grid-cols-2 gap-4 mb-6 font-bold">
-        <button onclick="startScanner()" class="card p-4 bg-slate-900 text-white flex items-center justify-center gap-2">📷 سكان</button>
-        <button onclick="showManualAdd()" class="card p-4 bg-white border-2 border-slate-900 flex items-center justify-center gap-2">➕ يدوي</button>
+    <div class="grid grid-cols-2 gap-4 mb-6">
+        <button onclick="startScanner()" class="card p-4 bg-slate-900 text-white font-bold flex flex-col items-center"><span>📷 سكان</span></button>
+        <button onclick="showManualAdd()" class="card p-4 bg-white border-2 border-slate-900 font-bold flex flex-col items-center"><span>➕ يدوي</span></button>
     </div>
 
     <div class="card p-5">
-        <h2 class="font-bold text-slate-700 mb-4 flex justify-between">وجبات اليوم <span id="item-count" class="text-blue-500">0</span></h2>
+        <h2 class="font-bold text-slate-700 mb-4 border-b pb-2">سجل اليوم</h2>
         <ul id="meals-list" class="space-y-3"></ul>
     </div>
 
-    <div id="modal" class="hidden fixed inset-0 bg-slate-900/90 backdrop-blur flex items-center justify-center p-6 z-[100]">
-        <div class="bg-white p-6 rounded-[32px] w-full max-w-sm">
-            <h3 id="p-name" class="font-black text-xl mb-4 text-center text-slate-800">جاري التحليل...</h3>
-            
-            <div class="grid grid-cols-2 gap-2 mb-6">
-                <div class="bg-gray-50 p-3 rounded-xl text-center"><span class="block text-[10px] text-gray-400">سعرات</span><b id="p-cal">0</b></div>
-                <div class="bg-orange-50 p-3 rounded-xl text-center"><span class="block text-[10px] text-orange-400">بروتين</span><b id="p-prot">0</b>g</div>
-                <div class="bg-blue-50 p-3 rounded-xl text-center"><span class="block text-[10px] text-blue-400">كربوهيدرات</span><b id="p-carb">0</b>g</div>
-                <div class="bg-yellow-50 p-3 rounded-xl text-center"><span class="block text-[10px] text-yellow-400">دهون</span><b id="p-fat">0</b>g</div>
+    <div id="modal" class="hidden fixed inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-6 z-[100]">
+        <div class="bg-white p-6 rounded-[30px] w-full max-w-sm">
+            <h3 id="p-name" class="font-black text-lg mb-4 text-center">جاري التحميل...</h3>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <div class="bg-gray-50 p-2 rounded-lg text-center text-xs">سعرات: <b id="p-cal">0</b></div>
+                <div class="bg-orange-50 p-2 rounded-lg text-center text-xs">بروتين: <b id="p-prot">0</b>g</div>
             </div>
-
-            <input type="number" id="amount-input" class="w-full border-2 border-slate-100 p-4 rounded-2xl mb-4 text-center text-2xl outline-none focus:border-blue-500" placeholder="الكمية بالغرام؟">
-            <button onclick="saveMeal()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg">إضافة للسجل</button>
+            <input type="number" id="amount-input" class="w-full border-2 border-slate-100 p-4 rounded-2xl mb-4 text-center text-2xl outline-none" placeholder="الوزن بالغرام">
+            <button onclick="saveMeal()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg">إضافة</button>
             <button onclick="closeModal()" class="w-full text-slate-400 mt-2 text-sm">إلغاء</button>
         </div>
     </div>
 
     <script>
         let allData = JSON.parse(localStorage.getItem('gymApp_Data')) || {};
-        let goals = JSON.parse(localStorage.getItem('gymApp_Goals')) || { cal: 2500, prot: 150, carb: 250, fat: 70 };
         let currentSelectedDate = new Date().toISOString().split('T')[0];
         let tempProd = {};
 
         document.getElementById('date-picker').value = currentSelectedDate;
 
-        function updateUI() {
-            let meals = allData[currentSelectedDate] || [];
-            let totals = { cal: 0, prot: 0, carb: 0, fat: 0 };
-            const list = document.getElementById('meals-list');
-
-            list.innerHTML = '';
-            meals.forEach((m, i) => {
-                totals.cal += m.cal; totals.prot += m.prot; totals.carb += m.carb; totals.fat += m.fat;
-                list.innerHTML += `<li class="flex justify-between p-3 bg-slate-50 rounded-xl border-r-4 border-blue-500">
-                    <div class="text-sm"><b>${m.name}</b> <br><small class="text-gray-400">${m.amount}g</small></div>
-                    <div class="text-left font-bold text-blue-600 text-xs">${Math.round(m.cal)} Cal <br> P: ${Math.round(m.prot)}g</div>
-                </li>`;
+        function startScanner() {
+            document.getElementById('scanner-section').classList.remove('hidden');
+            
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector('#interactive'),
+                    constraints: {
+                        width: { min: 1280 },
+                        height: { min: 720 },
+                        facingMode: "environment",
+                        // تحسينات للآيفون برو ماكس
+                        focusMode: "continuous",
+                        whiteBalanceMode: "continuous"
+                    }
+                },
+                decoder: { readers: ["ean_reader", "ean_8_reader", "upc_reader"] },
+                locate: true // يساعد في إيجاد الباركود حتى لو كان مائلاً
+            }, (err) => {
+                if (err) { alert("خطأ في الكاميرا"); return; }
+                Quagga.start();
+                
+                // محاولة تفعيل الزووم بعد التشغيل (يعمل في بعض المتصفحات الحديثة)
+                const track = Quagga.CameraAccess.getActiveTrack();
+                if (track && typeof track.getCapabilities === 'function') {
+                    const caps = track.getCapabilities();
+                    if (caps.zoom) {
+                        track.applyConstraints({ advanced: [{ zoom: 2.0 }] });
+                    }
+                }
             });
 
-            document.getElementById('total-calories').innerText = Math.round(totals.cal);
-            document.getElementById('total-protein').innerText = Math.round(totals.prot);
-            document.getElementById('total-carbs').innerText = Math.round(totals.carb);
-            document.getElementById('total-fat').innerText = Math.round(totals.fat);
-            document.getElementById('item-count').innerText = meals.length;
-            
-            localStorage.setItem('gymApp_Data', JSON.stringify(allData));
+            Quagga.onDetected(d => {
+                if(navigator.vibrate) navigator.vibrate(100);
+                fetchProductInfo(d.codeResult.code);
+            });
         }
 
         function fetchProductInfo(code) {
-            stopScanner(); showModal("جاري تحليل المنتج...");
+            stopScanner();
+            showModal("جاري البحث...");
             fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`)
                 .then(r => r.json()).then(d => {
                     if(d.status === 1) {
                         let n = d.product.nutriments;
                         tempProd = {
-                            name: d.product.product_name_de || d.product.product_name || "منتج غير معروف",
+                            name: d.product.product_name_de || d.product.product_name || "منتج " + code,
                             cal100: n['energy-kcal_100g'] || 0,
                             prot100: n['proteins_100g'] || 0,
                             carb100: n['carbohydrates_100g'] || 0,
@@ -124,10 +143,28 @@
                         document.getElementById('p-name').innerText = tempProd.name;
                         document.getElementById('p-cal').innerText = tempProd.cal100;
                         document.getElementById('p-prot').innerText = tempProd.prot100;
-                        document.getElementById('p-carb').innerText = tempProd.carb100;
-                        document.getElementById('p-fat').innerText = tempProd.fat100;
-                    } else { alert("لم نجد بيانات غذائية لهذا الكود"); closeModal(); }
+                    } else { alert("المنتج غير موجود"); closeModal(); }
                 });
+        }
+
+        // باقي الوظائف (Save, Update UI, etc.) تبقى كما هي
+        function updateUI() {
+            let meals = allData[currentSelectedDate] || [];
+            let totals = { cal: 0, prot: 0, carb: 0, fat: 0 };
+            const list = document.getElementById('meals-list');
+            list.innerHTML = '';
+            meals.forEach((m, i) => {
+                totals.cal += m.cal; totals.prot += m.prot; totals.carb += m.carb; totals.fat += m.fat;
+                list.innerHTML += `<li class="flex justify-between p-3 bg-slate-50 rounded-xl">
+                    <div class="text-xs"><b>${m.name}</b><br>${m.amount}g</div>
+                    <div class="text-left font-bold text-blue-600 text-xs">${Math.round(m.cal)} Cal<br>P: ${Math.round(m.prot)}g</div>
+                </li>`;
+            });
+            document.getElementById('total-calories').innerText = Math.round(totals.cal);
+            document.getElementById('total-protein').innerText = Math.round(totals.prot);
+            document.getElementById('total-carbs').innerText = Math.round(totals.carb);
+            document.getElementById('total-fat').innerText = Math.round(totals.fat);
+            localStorage.setItem('gymApp_Data', JSON.stringify(allData));
         }
 
         function saveMeal() {
@@ -136,33 +173,18 @@
             if(!allData[currentSelectedDate]) allData[currentSelectedDate] = [];
             allData[currentSelectedDate].push({
                 name: tempProd.name, amount: g,
-                cal: (tempProd.cal100 * g)/100,
-                prot: (tempProd.prot100 * g)/100,
-                carb: (tempProd.carb100 * g)/100,
-                fat: (tempProd.fat100 * g)/100
+                cal: (tempProd.cal100 * g)/100, prot: (tempProd.prot100 * g)/100,
+                carb: (tempProd.carb100 * g)/100, fat: (tempProd.fat100 * g)/100
             });
             closeModal(); updateUI();
-        }
-
-        function editGoals() {
-            let p = prompt("هدف البروتين اليومي (غرام):", goals.prot);
-            if(p) { goals.prot = p; localStorage.setItem('gymApp_Goals', JSON.stringify(goals)); updateUI(); }
-        }
-
-        function startScanner() {
-            document.getElementById('scanner-section').classList.remove('hidden');
-            Quagga.init({
-                inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { width: 400, height: 180, facingMode: "environment"} },
-                decoder: { readers: ["ean_reader"] }
-            }, (err) => { Quagga.start(); });
-            Quagga.onDetected(d => fetchProductInfo(d.codeResult.code));
         }
 
         function stopScanner() { Quagga.stop(); document.getElementById('scanner-section').classList.add('hidden'); }
         function showModal(m) { if(m) document.getElementById('p-name').innerText = m; document.getElementById('modal').classList.remove('hidden'); }
         function closeModal() { document.getElementById('modal').classList.add('hidden'); }
         function changeDate() { currentSelectedDate = document.getElementById('date-picker').value; updateUI(); }
-
+        function showManualAdd() { let n = prompt("الاسم:"); let c = prompt("السعرات/100غ:"); if(n && c) { tempProd = {name:n, cal100:c, prot100:0, carb100:0, fat100:0}; showModal(); } }
+        
         updateUI();
     </script>
 </body>
