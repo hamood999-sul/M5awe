@@ -108,12 +108,15 @@
         let tempProd = {};
         let clickTimer = null;
 
-        const MY_SUPPS = ["فيتامين C", "امينو 2222", "Mk-677", "ماغنيسيوم", "اوميجا 3", "D3+K2", "كرياتين"];
-        const MY_WORKOUTS = ["Push", "Pull", "Leg", "صدر + تراي", "ضهر + باي", "اكتاف", "كارديو", "راحة"];
+        // تعديل ٢: إضافة جينيسيغ للمكملات
+        const MY_SUPPS = ["جينيسيغ", "فيتامين C", "امينو 2222", "Mk-677", "ماغنيسيوم", "اوميجا 3", "D3+K2", "كرياتين"];
+        
+        // تعديل ٣: إضافة خيارات الكارديو المحددة
+        const MY_WORKOUTS = ["Push", "Pull", "Leg", "صدر + تراي", "ضهر + باي", "اكتاف", "كارديو 20", "كارديو 30", "كارديو 40", "راحة"];
 
         document.getElementById('date-picker').value = currentSelectedDate;
 
-        // دالة جلب المعلومات المحدثة (تم إصلاحها لتعمل مع خوادم Open Food Facts)
+        // تعديل ١: تحسين وظيفة جلب معلومات الباركود
         async function fetchProductInfo(barcode) {
             stopScanner();
             document.getElementById('p-name').innerText = "جاري البحث...";
@@ -121,20 +124,17 @@
             showModal();
 
             try {
-                // نستخدم Headers للتعريف عن التطبيق لمنع الحظر
-                const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`, {
-                    headers: { 'User-Agent': 'MySmartCoach/1.0 (Web App)' }
-                });
-                
+                // استخدام رابط API محسن مع إضافة معايير اللغة لضمان نتائج أفضل في ألمانيا
+                const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json?fields=product_name,nutriments`);
                 const data = await response.json();
 
-                if (data.status === 1) {
+                if (data.status === 1 || data.product) {
                     const product = data.product;
                     const nut = product.nutriments;
                     
                     tempProd = {
                         name: product.product_name || "منتج غير معروف",
-                        cal100: nut['energy-kcal_100g'] || 0,
+                        cal100: nut['energy-kcal_100g'] || nut['energy-kcal_serving'] || 0,
                         prot100: nut['proteins_100g'] || 0,
                         carb100: nut['carbohydrates_100g'] || 0,
                         fat100: nut['fat_100g'] || 0
@@ -149,7 +149,7 @@
                 }
             } catch (err) {
                 document.getElementById('p-name').innerText = "خطأ في الاتصال!";
-                document.getElementById('p-stats').innerText = "تحقق من الإنترنت وحاول مجدداً";
+                document.getElementById('p-stats').innerText = "تحقق من الإنترنت أو جرب لاحقاً";
             }
         }
 
