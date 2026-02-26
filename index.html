@@ -1,379 +1,176 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Coach Hamood</title>
-    
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💪%3C/text%3E%3C/svg%3E">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💪%3C/text%3E%3C/svg%3E">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Coach Hamood</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f4f8; touch-action: manipulation; }
-        .card { background: white; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
-        #scanner-wrap { width: 100%; max-width: 400px; margin: 0 auto; overflow: hidden; border-radius: 20px; border: 4px solid #3b82f6; height: 220px; position: relative; background: #000; }
-        #interactive.viewport video, #interactive.viewport canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
-        .laser { position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: rgba(255, 0, 0, 0.5); box-shadow: 0 0 10px red; animation: scanning 2s infinite; z-index: 10; }
-        @keyframes scanning { 0%, 100% { top: 25%; } 50% { top: 75%; } }
-        .fav-food-btn { transition: all 0.2s; border: 1px solid #e2e8f0; background: white; padding: 8px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; color: #475569; user-select: none; -webkit-tap-highlight-color: transparent; }
-        .fav-food-btn:active { background-color: #f1f5f9; transform: scale(0.95); }
-        #progress-bar { transition: width 0.5s ease-in-out; }
-    </style>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💪%3C/text%3E%3C/svg%3E">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+<style>
+body { font-family: 'Segoe UI', sans-serif; background-color: #f0f4f8; }
+.card { background: white; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+#scanner-wrap { width: 100%; max-width: 400px; margin: 0 auto; overflow: hidden; border-radius: 20px; border: 4px solid #3b82f6; height: 240px; position: relative; background: #000; }
+#interactive video { width: 100%; height: 100%; object-fit: cover; }
+.laser { position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: rgba(255, 0, 0, 0.5); box-shadow: 0 0 10px red; animation: scanning 2s infinite; z-index: 10; }
+@keyframes scanning { 0%,100%{top:25%}50%{top:75%}}
+#progress-bar{transition:width .5s ease-in-out}
+</style>
 </head>
+
 <body class="p-4 pb-24">
 
-    <div class="card p-6 mb-4 border-t-8 border-blue-600">
-        <div class="flex justify-between items-center mb-4">
-            <input type="date" id="date-picker" onchange="changeDate()" class="bg-gray-100 rounded-lg px-2 py-1 text-xs font-bold outline-none">
-            <button onclick="editGoals()" class="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold">الأهداف ⚙️</button>
-        </div>
-        
-        <div class="text-center mb-2">
-            <div class="flex items-baseline justify-center gap-1">
-                <span id="total-calories" class="text-5xl font-black text-slate-800">0</span>
-                <span class="text-gray-400 font-bold">/ <span id="goal-display">2500</span></span>
-            </div>
-            <div id="remaining-label" class="text-[11px] font-bold mt-1 uppercase tracking-wider">باقي لك: <span id="calories-left">0</span> سعرة</div>
-        </div>
+<div class="card p-6 mb-4 border-t-8 border-blue-600 text-center">
+<div class="flex justify-between items-center mb-4">
+<input type="date" id="date-picker" class="bg-gray-100 rounded-lg px-2 py-1 text-xs font-bold outline-none">
+<button onclick="editGoals()" class="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold">الأهداف ⚙️</button>
+</div>
 
-        <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden mb-4 border border-gray-50">
-            <div id="progress-bar" class="bg-blue-600 h-full w-0"></div>
-        </div>
+<div class="flex items-baseline justify-center gap-1">
+<span id="total-calories" class="text-5xl font-black text-slate-800">0</span>
+<span class="text-gray-400 font-bold">/ <span id="goal-display">2500</span></span>
+</div>
 
-        <div class="flex gap-2 text-center">
-            <div class="flex-1 bg-orange-50 p-2 rounded-xl border border-orange-100"><small class="block text-[9px] text-orange-400 font-bold uppercase">Prot</small><b id="total-protein">0</b>g</div>
-            <div class="flex-1 bg-blue-50 p-2 rounded-xl border border-blue-100"><small class="block text-[9px] text-blue-400 font-bold uppercase">Carb</small><b id="total-carbs">0</b>g</div>
-            <div class="flex-1 bg-yellow-50 p-2 rounded-xl border border-yellow-100"><small class="block text-[9px] text-yellow-600 font-bold uppercase">Fat</small><b id="total-fat">0</b>g</div>
-        </div>
-    </div>
+<div id="remaining-label" class="text-[11px] font-bold mt-1 text-blue-500">باقي لك: <span id="calories-left">0</span> سعرة</div>
 
-    <div class="card p-5 mb-4 border-r-8 border-orange-500">
-        <div class="flex justify-between items-center mb-3">
-            <h2 class="font-bold text-slate-700 text-sm italic">⭐ أكلاتي المتكررة</h2>
-            <span class="text-[8px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">نقرتين للحذف 🗑️</span>
-        </div>
-        <div id="fav-foods-container" class="flex flex-wrap gap-2"></div>
-    </div>
+<div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden mt-3">
+<div id="progress-bar" class="bg-blue-600 h-full w-0"></div>
+</div>
 
-    <div class="grid grid-cols-2 gap-3 mb-4">
-        <div class="card p-4 border-r-4 border-purple-500">
-            <div class="flex justify-between items-center mb-2">
-                <h2 class="font-bold text-slate-700 text-xs italic">🏋️‍♂️ التمرين</h2>
-                <button onclick="addItem('workout')" class="text-purple-600 text-lg">⊕</button>
-            </div>
-            <div id="workout-container" class="flex flex-col gap-1"></div>
-        </div>
-        <div class="card p-4 border-r-4 border-green-500">
-            <div class="flex justify-between items-center mb-2">
-                <h2 class="font-bold text-slate-700 text-xs italic">💊 المكملات</h2>
-                <button onclick="addItem('supp')" class="text-green-600 text-lg">⊕</button>
-            </div>
-            <div id="supps-container" class="flex flex-col gap-1"></div>
-        </div>
-    </div>
+<div class="flex gap-2 mt-4 text-center">
+<div class="flex-1 bg-orange-50 p-2 rounded-xl"><b id="total-protein">0</b>g بروتين</div>
+</div>
+</div>
 
-    <div id="scanner-section" class="hidden mb-4">
-        <div id="scanner-wrap">
-            <div id="interactive" class="viewport"></div>
-            <div class="laser"></div>
-            <button onclick="stopScanner()" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full font-bold z-[60]">✕</button>
-        </div>
-    </div>
+<div id="scanner-section" class="hidden mb-4">
+<div id="scanner-wrap">
+<div id="interactive"></div>
+<div class="laser"></div>
+<button onclick="stopScanner()" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full font-bold">✕</button>
+</div>
+</div>
 
-    <div class="grid grid-cols-2 gap-4 mb-6">
-        <button onclick="startScanner()" class="card p-4 bg-slate-900 text-white font-bold flex flex-col items-center">
-            <span class="text-xl">📷</span><span class="text-xs mt-1">سكان باركود</span>
-        </button>
-        <button onclick="showManualAdd()" class="card p-4 bg-white border-2 border-slate-900 font-bold flex flex-col items-center">
-            <span class="text-xl">➕</span><span class="text-xs mt-1">إضافة يدوية</span>
-        </button>
-    </div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<button onclick="startScanner()" class="card p-4 bg-slate-900 text-white font-bold flex flex-col items-center">
+📷 سكان باركود
+</button>
+<button onclick="showManualAdd()" class="card p-4 bg-white border-2 border-slate-900 font-bold">
+➕ إضافة يدوية
+</button>
+</div>
 
-    <div class="card p-5 min-h-[200px]">
-        <div class="flex justify-between items-center mb-4 border-b pb-2">
-            <h2 class="font-bold text-slate-700">وجبات اليوم</h2>
-            <button onclick="clearDay()" class="text-[10px] text-red-500 font-bold underline">مسح السجل</button>
-        </div>
-        <ul id="meals-list" class="space-y-3"></ul>
-    </div>
+<div class="card p-5 min-h-[200px]">
+<div class="flex justify-between mb-4 border-b pb-2">
+<h2 class="font-bold">وجبات اليوم</h2>
+<button onclick="clearDay()" class="text-red-500 text-xs">مسح السجل</button>
+</div>
+<ul id="meals-list" class="space-y-3"></ul>
+</div>
 
-    <div id="modal" class="hidden fixed inset-0 bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-6 z-[100]">
-        <div class="bg-white p-7 rounded-[35px] w-full max-w-sm">
-            <h3 id="p-name" class="font-black text-lg mb-4 text-center text-slate-800 italic uppercase">جاري التحليل...</h3>
-            <div id="p-stats" class="text-center text-xs text-blue-600 mb-4 font-bold"></div>
-            <input type="number" id="amount-input" class="w-full border-2 border-slate-100 p-4 rounded-2xl mb-6 text-center text-3xl outline-none focus:border-blue-500" placeholder="الكمية (غرام)">
-            <button onclick="saveMeal()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg">تأكيد الإضافة</button>
-            <button onclick="closeModal()" class="w-full text-slate-400 mt-4 text-sm font-bold">إلغاء</button>
-        </div>
-    </div>
+<div id="modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-6">
+<div class="bg-white p-6 rounded-3xl w-full max-w-sm">
+<h3 id="p-name" class="font-bold text-lg mb-4 text-center">...</h3>
+<input type="number" id="amount-input" class="w-full border p-3 rounded-xl mb-4 text-center" placeholder="الكمية (غرام)">
+<button onclick="saveMeal()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">تأكيد</button>
+<button onclick="closeModal()" class="w-full mt-3 text-gray-400">إلغاء</button>
+</div>
+</div>
 
-    <script>
-        let allData = JSON.parse(localStorage.getItem('gymApp_Data')) || {};
-        let suppsTaken = JSON.parse(localStorage.getItem('gymApp_Supps')) || {};
-        let workoutsDone = JSON.parse(localStorage.getItem('gymApp_Workouts')) || {};
-        let goals = JSON.parse(localStorage.getItem('gymApp_Goals')) || { cal: 2500, prot: 150 };
-        let myFavFoods = JSON.parse(localStorage.getItem('gymApp_FavFoods')) || [];
+<script>
+let allData = JSON.parse(localStorage.getItem('gymData')) || {};
+let goals = JSON.parse(localStorage.getItem('gymGoals')) || {cal:2500};
+let currentDate = new Date().toISOString().split('T')[0];
+let tempProd = {};
+let html5QrCode;
 
-        let MY_SUPPS = JSON.parse(localStorage.getItem('gymApp_SuppsList')) || ["جينيسيغ", "فيتامين C", "امينو 2222", "Mk-677", "ماغنيسيوم", "اوميجا 3", "D3+K2", "كرياتين"];
-        let MY_WORKOUTS = JSON.parse(localStorage.getItem('gymApp_WorkoutsList')) || ["Push", "Pull", "Leg", "صدر + تراي", "ضهر + باي", "اكتاف", "كارديو 20", "راحة"];
+document.getElementById('date-picker').value = currentDate;
 
-        let currentSelectedDate = new Date().toISOString().split('T')[0];
-        let tempProd = {};
-        let clickTimer = null;
+function updateUI(){
+let meals = allData[currentDate] || [];
+let total=0, prot=0;
+let list=document.getElementById('meals-list');
+list.innerHTML='';
+meals.forEach((m,i)=>{
+total+=m.cal; prot+=m.prot;
+list.innerHTML+=`<li class="flex justify-between bg-white p-3 rounded-xl shadow">
+<span>${m.name} (${m.amount}غ)</span>
+<div>${Math.round(m.cal)} Cal 
+<button onclick="deleteMeal(${i})" class="text-red-400 ml-2">✕</button></div></li>`;
+});
+document.getElementById('total-calories').innerText=Math.round(total);
+document.getElementById('total-protein').innerText=Math.round(prot);
+document.getElementById('goal-display').innerText=goals.cal;
+document.getElementById('progress-bar').style.width=Math.min((total/goals.cal)*100,100)+'%';
+localStorage.setItem('gymData',JSON.stringify(allData));
+}
 
-        document.getElementById('date-picker').value = currentSelectedDate;
+function startScanner(){
+document.getElementById('scanner-section').classList.remove('hidden');
+html5QrCode=new Html5Qrcode("interactive");
+Html5Qrcode.getCameras().then(devices=>{
+let cam=devices[0];
+html5QrCode.start(
+cam.id,
+{fps:10, qrbox:{width:250,height:150}},
+(decodedText)=>{
+stopScanner();
+fetchProductInfo(decodedText);
+}
+);
+});
+}
 
-        async function fetchProductInfo(barcode) {
-            stopScanner();
-            document.getElementById('p-name').innerText = "جاري البحث...";
-            showModal();
-            try {
-                const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json?fields=product_name,nutriments`);
-                const data = await response.json();
-                if (data.status === 1 || data.product) {
-                    const product = data.product;
-                    const nut = product.nutriments;
-                    tempProd = {
-                        name: product.product_name || "منتج غير معروف",
-                        cal100: nut['energy-kcal_100g'] || nut['energy-kcal_serving'] || 0,
-                        prot100: nut['proteins_100g'] || 0
-                    };
-                    document.getElementById('p-name').innerText = tempProd.name;
-                    document.getElementById('p-stats').innerText = `${Math.round(tempProd.cal100)} kcal / 100g`;
-                } else {
-                    document.getElementById('p-name').innerText = "لم يتم العثور على المنتج";
-                }
-            } catch (err) {
-                document.getElementById('p-name').innerText = "خطأ في الاتصال بالشبكة";
-            }
-        }
+function stopScanner(){
+if(html5QrCode){
+html5QrCode.stop().then(()=>html5QrCode.clear());
+}
+document.getElementById('scanner-section').classList.add('hidden');
+}
 
-        function startScanner() {
-            document.getElementById('scanner-section').classList.remove('hidden');
-            Quagga.init({
-                inputStream: {
-                    name: "Live",
-                    type: "LiveStream",
-                    target: document.querySelector('#interactive'),
-                    constraints: { facingMode: "environment" }
-                },
-                locate: true,
-                decoder: { readers: ["ean_reader", "upc_reader", "ean_8_reader"] }
-            }, (err) => {
-                if (err) { alert("خطأ في تشغيل الكاميرا"); return; }
-                Quagga.start();
-            });
-            Quagga.onDetected((data) => {
-                fetchProductInfo(data.codeResult.code);
-            });
-        }
+async function fetchProductInfo(barcode){
+document.getElementById('p-name').innerText="جاري البحث...";
+showModal();
+try{
+let res=await fetch(`https://de.openfoodfacts.org/api/v2/product/${barcode}.json`);
+let data=await res.json();
+if(!data.product){document.getElementById('p-name').innerText="غير موجود";return;}
+let p=data.product;
+tempProd={
+name:p.product_name||"منتج",
+cal100:p.nutriments?.['energy-kcal_100g']||0,
+prot100:p.nutriments?.['proteins_100g']||0
+};
+document.getElementById('p-name').innerText=tempProd.name;
+}catch{document.getElementById('p-name').innerText="خطأ اتصال";}
+}
 
-        function stopScanner() {
-            Quagga.stop();
-            document.getElementById('scanner-section').classList.add('hidden');
-        }
+function showManualAdd(){
+let n=prompt("اسم الأكلة:");
+if(!n)return;
+tempProd={name:n,cal100:parseFloat(prompt("سعرات لكل 100غ:",0))||0,prot100:parseFloat(prompt("بروتين لكل 100غ:",0))||0};
+showModal();
+document.getElementById('p-name').innerText=n;
+}
 
-        // --- باقي الدوال (نفس المنطق السابق مع حماية تمرينين فقط) ---
+function saveMeal(){
+let val=document.getElementById('amount-input').value;
+if(!val)return;
+if(!allData[currentDate])allData[currentDate]=[];
+let f=val/100;
+allData[currentDate].push({name:tempProd.name,amount:val,cal:tempProd.cal100*f,prot:tempProd.prot100*f});
+closeModal();updateUI();
+}
 
-        function renderLists() {
-            const fContainer = document.getElementById('fav-foods-container');
-            fContainer.innerHTML = myFavFoods.length ? '' : '<span class="text-gray-300 text-[10px]">لا يوجد مفضلات..</span>';
-            myFavFoods.forEach((food, index) => {
-                const btn = document.createElement('button');
-                btn.className = 'fav-food-btn';
-                btn.innerText = food.name;
-                btn.onclick = () => {
-                    if (clickTimer == null) {
-                        clickTimer = setTimeout(() => { clickTimer = null; addFavFood(index); }, 300);
-                    } else {
-                        clearTimeout(clickTimer); clickTimer = null; removeFavFood(index);
-                    }
-                };
-                fContainer.appendChild(btn);
-            });
-            renderSuppsAndWorkouts();
-        }
+function deleteMeal(i){allData[currentDate].splice(i,1);updateUI();}
+function clearDay(){if(confirm("مسح اليوم؟")){allData[currentDate]=[];updateUI();}}
+function closeModal(){document.getElementById('modal').classList.add('hidden');document.getElementById('amount-input').value='';}
+function showModal(){document.getElementById('modal').classList.remove('hidden');}
+function editGoals(){let c=prompt("هدف السعرات:",goals.cal);if(c){goals.cal=parseInt(c);localStorage.setItem('gymGoals',JSON.stringify(goals));updateUI();}}
 
-        function renderSuppsAndWorkouts() {
-            const sContainer = document.getElementById('supps-container');
-            sContainer.innerHTML = '';
-            MY_SUPPS.forEach((s, idx) => {
-                const isActive = (suppsTaken[currentSelectedDate] || []).includes(s);
-                const btn = document.createElement('button');
-                btn.className = `text-right px-2 py-1.5 rounded-lg text-[10px] font-bold border ${isActive ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-500'}`;
-                btn.innerText = s;
-                btn.onclick = () => {
-                    if (clickTimer == null) {
-                        clickTimer = setTimeout(() => { clickTimer = null; toggleItem(s, 'supp'); }, 300);
-                    } else {
-                        clearTimeout(clickTimer); clickTimer = null; removeItem(idx, 'supp');
-                    }
-                };
-                sContainer.appendChild(btn);
-            });
-
-            const wContainer = document.getElementById('workout-container');
-            wContainer.innerHTML = '';
-            MY_WORKOUTS.forEach((w, idx) => {
-                const isActive = (workoutsDone[currentSelectedDate] || []).includes(w);
-                const btn = document.createElement('button');
-                btn.className = `text-right px-2 py-1.5 rounded-lg text-[10px] font-bold border ${isActive ? 'bg-purple-600 text-white' : 'bg-gray-50 text-gray-500'}`;
-                btn.innerText = w;
-                btn.onclick = () => {
-                    if (clickTimer == null) {
-                        clickTimer = setTimeout(() => { clickTimer = null; toggleWorkout(w); }, 300);
-                    } else {
-                        clearTimeout(clickTimer); clickTimer = null; removeItem(idx, 'workout');
-                    }
-                };
-                wContainer.appendChild(btn);
-            });
-        }
-
-        function toggleWorkout(name) {
-            if (!workoutsDone[currentSelectedDate]) workoutsDone[currentSelectedDate] = [];
-            const idx = workoutsDone[currentSelectedDate].indexOf(name);
-            if (idx > -1) {
-                workoutsDone[currentSelectedDate].splice(idx, 1);
-            } else {
-                if (workoutsDone[currentSelectedDate].length < 2) {
-                    workoutsDone[currentSelectedDate].push(name);
-                } else {
-                    alert("يا وحش تمرينين باليوم بيكفوا!");
-                }
-            }
-            localStorage.setItem('gymApp_Workouts', JSON.stringify(workoutsDone));
-            renderLists();
-        }
-
-        function toggleItem(name, type) {
-            let store = type === 'supp' ? suppsTaken : workoutsDone;
-            if (!store[currentSelectedDate]) store[currentSelectedDate] = [];
-            const idx = store[currentSelectedDate].indexOf(name);
-            if (idx > -1) store[currentSelectedDate].splice(idx, 1);
-            else store[currentSelectedDate].push(name);
-            localStorage.setItem(type === 'supp' ? 'gymApp_Supps' : 'gymApp_Workouts', JSON.stringify(store));
-            renderLists();
-        }
-
-        function updateUI() {
-            let meals = allData[currentSelectedDate] || [];
-            let totals = { cal: 0, prot: 0 };
-            const list = document.getElementById('meals-list');
-            list.innerHTML = meals.length ? '' : '<div class="text-center py-10 text-gray-300 italic text-xs">لا يوجد وجبات اليوم</div>';
-            
-            meals.forEach((m, i) => {
-                totals.cal += m.cal; totals.prot += m.prot;
-                list.innerHTML += `<li class="flex justify-between items-center p-3 bg-white border border-slate-50 rounded-2xl shadow-sm">
-                    <div class="flex flex-col"><span class="font-bold text-xs">${m.name}</span><span class="text-[9px] text-gray-400">${m.amount} غ</span></div>
-                    <div class="flex items-center gap-3"><div class="text-left font-black text-blue-600 text-[10px]">${Math.round(m.cal)} Cal</div>
-                    <button onclick="deleteMeal(${i})" class="text-red-300 px-2 text-lg">✕</button></div></li>`;
-            });
-
-            const totalCal = Math.round(totals.cal);
-            const goalCal = goals.cal;
-            const remaining = goalCal - totalCal;
-            
-            document.getElementById('total-calories').innerText = totalCal;
-            document.getElementById('goal-display').innerText = goalCal;
-            document.getElementById('total-protein').innerText = Math.round(totals.prot);
-
-            const progressPercent = Math.min((totalCal / goalCal) * 100, 100);
-            document.getElementById('progress-bar').style.width = progressPercent + '%';
-
-            const remainingLabel = document.getElementById('remaining-label');
-            if (remaining >= 0) {
-                remainingLabel.className = "text-[11px] font-bold mt-1 uppercase tracking-wider text-blue-500";
-                remainingLabel.innerHTML = `باقي لك: <span>${remaining}</span> سعرة`;
-                document.getElementById('progress-bar').classList.replace('bg-red-500', 'bg-blue-600');
-            } else {
-                remainingLabel.className = "text-[11px] font-bold mt-1 uppercase tracking-wider text-red-500";
-                remainingLabel.innerHTML = `تجاوزت الهدف بـ: <span>${Math.abs(remaining)}</span> سعرة ⚠️`;
-                document.getElementById('progress-bar').classList.replace('bg-blue-600', 'bg-red-500');
-            }
-            
-            localStorage.setItem('gymApp_Data', JSON.stringify(allData));
-            renderLists();
-        }
-
-        function addItem(type) {
-            const val = prompt(type === 'supp' ? "اسم المكمل:" : "اسم التمرين:");
-            if (!val) return;
-            if (type === 'supp') {
-                MY_SUPPS.push(val);
-                localStorage.setItem('gymApp_SuppsList', JSON.stringify(MY_SUPPS));
-            } else {
-                MY_WORKOUTS.push(val);
-                localStorage.setItem('gymApp_WorkoutsList', JSON.stringify(MY_WORKOUTS));
-            }
-            renderLists();
-        }
-
-        function removeItem(idx, type) {
-            if (confirm("حذف هذا العنصر نهائياً؟")) {
-                if (type === 'supp') MY_SUPPS.splice(idx, 1);
-                else MY_WORKOUTS.splice(idx, 1);
-                localStorage.setItem(type === 'supp' ? 'gymApp_SuppsList' : 'gymApp_WorkoutsList', JSON.stringify(type === 'supp' ? MY_SUPPS : MY_WORKOUTS));
-                renderLists();
-            }
-        }
-
-        function showManualAdd() {
-            const n = prompt("اسم الأكلة:");
-            if (!n) return;
-            tempProd = { 
-                name: n, 
-                cal100: parseFloat(prompt("سعرات لكل 100غ:", "0")) || 0, 
-                prot100: parseFloat(prompt("بروتين لكل 100غ:", "0")) || 0
-            };
-            if (!myFavFoods.some(f => f.name === n)) {
-                myFavFoods.push(tempProd);
-                localStorage.setItem('gymApp_FavFoods', JSON.stringify(myFavFoods));
-            }
-            document.getElementById('p-name').innerText = n;
-            showModal();
-        }
-
-        function saveMeal() {
-            let val = document.getElementById('amount-input').value; 
-            if(!val) return;
-            if(!allData[currentSelectedDate]) allData[currentSelectedDate] = [];
-            let f = val / 100;
-            allData[currentSelectedDate].push({
-                name: tempProd.name, amount: val,
-                cal: tempProd.cal100 * f, prot: tempProd.prot100 * f
-            });
-            closeModal();
-            updateUI();
-        }
-
-        function showModal() { document.getElementById('modal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('amount-input').value = ''; }
-        function changeDate() { currentSelectedDate = document.getElementById('date-picker').value; updateUI(); }
-        function deleteMeal(i) { allData[currentSelectedDate].splice(i, 1); updateUI(); }
-        function clearDay() { if(confirm("مسح سجل اليوم؟")) { allData[currentSelectedDate] = []; updateUI(); } }
-        function editGoals() { 
-            let c = prompt("حدد هدف السعرات اليومي:", goals.cal); 
-            if(c) { goals.cal = parseInt(c); localStorage.setItem('gymApp_Goals', JSON.stringify(goals)); updateUI(); } 
-        }
-        function addFavFood(index) {
-            tempProd = myFavFoods[index];
-            document.getElementById('p-name').innerText = tempProd.name;
-            showModal();
-        }
-        function removeFavFood(index) {
-            if (confirm(`حذف من المفضلات؟`)) {
-                myFavFoods.splice(index, 1);
-                localStorage.setItem('gymApp_FavFoods', JSON.stringify(myFavFoods));
-                renderLists();
-            }
-        }
-
-        updateUI();
-    </script>
+updateUI();
+</script>
 </body>
 </html>
