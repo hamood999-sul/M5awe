@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MyX1</title>
+    <title>مدربي الرياضي - النسخة الذكية</title>
     
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💪%3C/text%3E%3C/svg%3E">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💪%3C/text%3E%3C/svg%3E">
@@ -19,10 +19,8 @@
         #interactive video { width: 100%; height: 100%; object-fit: cover; }
         .laser { position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: rgba(255, 0, 0, 0.5); box-shadow: 0 0 10px red; animation: scanning 2s infinite; z-index: 10; }
         @keyframes scanning { 0%, 100% { top: 25%; } 50% { top: 75%; } }
-        .fav-food-btn { transition: all 0.2s; border: 1px solid #e2e8f0; background: white; padding: 8px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; color: #475569; position: relative; }
-        .fav-food-btn:active { transform: scale(0.95); background-color: #f8fafc; }
-        .supp-btn.active-supp { background-color: #3b82f6; color: white; border-color: #3b82f6; }
-        .workout-btn.active-workout { background-color: #8b5cf6; color: white; border-color: #8b5cf6; }
+        .fav-food-btn { transition: all 0.2s; border: 1px solid #e2e8f0; background: white; padding: 8px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; color: #475569; user-select: none; -webkit-tap-highlight-color: transparent; }
+        .fav-food-btn:active { background-color: #f1f5f9; transform: scale(0.95); }
     </style>
 </head>
 <body class="p-4 pb-24">
@@ -46,7 +44,7 @@
     <div class="card p-5 mb-4 border-r-8 border-orange-500">
         <div class="flex justify-between items-center mb-3">
             <h2 class="font-bold text-slate-700 text-sm italic">⭐ أكلاتي المتكررة</h2>
-            <span class="text-[8px] text-gray-400 font-bold">نقرة مزدوجة للحذف 🗑️</span>
+            <span class="text-[8px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">نقرتين للحذف 🗑️</span>
         </div>
         <div id="fav-foods-container" class="flex flex-wrap gap-2">
             <span class="text-gray-300 text-[10px]">أضف أكلة يدوية لتظهر هنا..</span>
@@ -107,6 +105,7 @@
 
         let currentSelectedDate = new Date().toISOString().split('T')[0];
         let tempProd = {};
+        let clickTimer = null; // متغير للمؤقت
 
         const MY_SUPPS = ["فيتامين C", "امينو 2222", "Mk-677", "ماغنيسيوم", "اوميجا 3", "D3+K2", "كرياتين"];
         const MY_WORKOUTS = ["Push", "Pull", "Leg", "صدر + تراي", "ضهر + باي", "اكتاف", "كارديو", "راحة"];
@@ -114,7 +113,39 @@
         document.getElementById('date-picker').value = currentSelectedDate;
 
         function renderLists() {
-            // المكملات والتمارين
+            // رندر المفضلات مع نظام النقرة المزدوجة المحسن
+            const fContainer = document.getElementById('fav-foods-container');
+            fContainer.innerHTML = myFavFoods.length ? '' : '<span class="text-gray-300 text-[10px]">أضف أكلة يدوية لتظهر هنا..</span>';
+            
+            myFavFoods.forEach((food, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'fav-food-btn';
+                btn.innerText = food.name;
+                
+                // حل مشكلة التداخل بين النقرة الواحدة والنقرتين
+                btn.onclick = (e) => {
+                    if (clickTimer == null) {
+                        // النقرة الأولى: نبدأ المؤقت
+                        clickTimer = setTimeout(() => {
+                            clickTimer = null;
+                            addFavFood(index); // تنفيذ الإضافة بعد التأكد أنها ليست نقرة مزدوجة
+                        }, 300); // ننتظر 300 جزء من الثانية
+                    } else {
+                        // النقرة الثانية قبل انتهاء المؤقت: نقرة مزدوجة
+                        clearTimeout(clickTimer);
+                        clickTimer = null;
+                        removeFavFood(index); // تنفيذ الحذف
+                    }
+                };
+
+                fContainer.appendChild(btn);
+            });
+
+            // رندر المكملات والتمارين
+            renderSuppsAndWorkouts();
+        }
+
+        function renderSuppsAndWorkouts() {
             const sContainer = document.getElementById('supps-container');
             sContainer.innerHTML = '';
             MY_SUPPS.forEach(s => {
@@ -128,27 +159,11 @@
                 const isActive = (workoutsDone[currentSelectedDate] || []).includes(w);
                 wContainer.innerHTML += `<button onclick="toggleWorkout('${w}')" class="text-right px-2 py-1.5 rounded-lg text-[10px] font-bold border ${isActive ? 'bg-purple-600 text-white' : 'bg-gray-50 text-gray-500'}">${w}</button>`;
             });
-
-            // قائمة المفضلات مع ميزة المسح
-            const fContainer = document.getElementById('fav-foods-container');
-            fContainer.innerHTML = myFavFoods.length ? '' : '<span class="text-gray-300 text-[10px]">أضف أكلة يدوية لتظهر هنا..</span>';
-            myFavFoods.forEach((food, index) => {
-                const btn = document.createElement('button');
-                btn.className = 'fav-food-btn';
-                btn.innerText = food.name;
-                // ضغطة واحدة للإضافة
-                btn.onclick = () => addFavFood(index);
-                // ضغطة مزدوجة للمسح
-                btn.ondblclick = (e) => {
-                    e.preventDefault();
-                    removeFavFood(index);
-                };
-                fContainer.appendChild(btn);
-            });
         }
 
         function removeFavFood(index) {
-            if (confirm(`هل تريد إزالة "${myFavFoods[index].name}" من قائمة المفضلات؟`)) {
+            const name = myFavFoods[index].name;
+            if (confirm(`هل تريد حذف "${name}" من المفضلات؟`)) {
                 myFavFoods.splice(index, 1);
                 localStorage.setItem('gymApp_FavFoods', JSON.stringify(myFavFoods));
                 renderLists();
@@ -210,7 +225,7 @@
             let meals = allData[currentSelectedDate] || [];
             let totals = { cal: 0, prot: 0, carb: 0, fat: 0 };
             const list = document.getElementById('meals-list');
-            list.innerHTML = meals.length ? '' : '<div class="text-center py-10 text-gray-300 italic text-xs">سجل وجباتك هنا</div>';
+            list.innerHTML = meals.length ? '' : '<div class="text-center py-10 text-gray-300 italic text-xs">لا يوجد وجبات اليوم</div>';
             
             meals.forEach((m, i) => {
                 totals.cal += m.cal; totals.prot += m.prot; totals.carb += m.carb; totals.fat += m.fat;
@@ -239,7 +254,7 @@
             renderLists();
         }
 
-        // باقي دوال النظام
+        // دوال مساعدة
         function toggleWorkout(name) {
             if (!workoutsDone[currentSelectedDate]) workoutsDone[currentSelectedDate] = [];
             const idx = workoutsDone[currentSelectedDate].indexOf(name);
@@ -274,7 +289,7 @@
         function changeDate() { currentSelectedDate = document.getElementById('date-picker').value; updateUI(); }
         function deleteMeal(i) { allData[currentSelectedDate].splice(i, 1); updateUI(); }
         function clearDay() { if(confirm("مسح سجل اليوم؟")) { allData[currentSelectedDate] = []; updateUI(); } }
-        function editGoals() { let c = prompt("هدف السعرات الجديد:", goals.cal); if(c) { goals.cal = c; updateUI(); } }
+        function editGoals() { let c = prompt("هدف السعرات:", goals.cal); if(c) { goals.cal = c; updateUI(); } }
 
         updateUI();
     </script>
