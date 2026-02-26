@@ -2,173 +2,182 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مفكرة السعرات السنوية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>مدربي الذكي - الإصدار الكامل</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f8fafc; }
-        .card { background: white; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
-        #interactive video, #interactive canvas { width: 100%; height: auto; border-radius: 15px; }
-        input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
+        .card { background: white; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        #scanner-wrap { width: 100%; max-width: 400px; margin: 0 auto; overflow: hidden; border-radius: 20px; border: 4px solid #10b981; position: relative; height: 200px; background: #000; }
+        #interactive video { width: 100%; height: 100%; object-fit: cover; }
+        .over-goal { color: #ef4444 !important; transform: scale(1.1); transition: all 0.3s; }
     </style>
 </head>
-<body class="p-4 pb-20">
+<body class="p-4 pb-10">
 
-    <div class="card p-6 mb-4 border-b-4 border-green-500">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xl font-bold text-gray-800">تقويم السعرات 🗓️</h1>
-            <input type="date" id="date-picker" onchange="changeDate()" 
-                   class="border-2 border-green-100 rounded-lg p-1 text-sm focus:outline-none focus:border-green-500">
-        </div>
+    <div class="card p-6 mb-4 text-center border-t-8 border-green-500 relative">
+        <input type="date" id="date-picker" onchange="changeDate()" class="mb-3 border-none bg-gray-100 rounded-full px-4 py-1 text-xs font-bold text-gray-600 outline-none">
         
-        <div class="text-center">
-            <p id="display-date-text" class="text-gray-500 text-sm mb-1 font-medium"></p>
-            <div class="text-4xl font-black text-green-600">
+        <div class="flex flex-col items-center">
+            <span class="text-gray-400 text-xs mb-1">المجموع الحالي</span>
+            <div id="calorie-container" class="text-5xl font-black text-green-600 mb-1">
                 <span id="total-calories">0</span>
-                <span class="text-base text-gray-400 font-normal">سعرة</span>
             </div>
-            <div class="mt-2 text-xs text-gray-400">
-                الهدف اليومي: <span id="goal-display">2500</span> سعرة
-            </div>
+            
+            <button onclick="editGoal()" class="flex items-center gap-1 bg-gray-50 px-3 py-1 rounded-full border border-gray-100 hover:bg-gray-100 transition-colors">
+                <span class="text-[10px] text-gray-500 font-medium text-right">الهدف: <span id="goal-display">2500</span></span>
+                <span class="text-xs">⚙️</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="scanner-section" class="hidden mb-4 animate-in fade-in duration-300">
+        <div id="scanner-wrap">
+            <div id="interactive" class="viewport"></div>
+            <button onclick="stopScanner()" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full shadow-lg font-bold z-50">✕</button>
         </div>
     </div>
 
     <div class="grid grid-cols-2 gap-4 mb-6">
-        <button onclick="startScanner()" class="card p-4 bg-zinc-800 text-white font-bold flex flex-col items-center hover:bg-black transition-all">
-            <span class="text-2xl mb-1">📷</span>
-            <span class="text-sm">مسح باركود</span>
+        <button onclick="startScanner()" class="card p-4 bg-zinc-900 text-white font-bold flex flex-col items-center active:scale-95 transition-transform">
+            <span class="text-xl">📷</span>
+            <span class="text-xs mt-1 text-green-400">Barcode Scan</span>
         </button>
-        <button onclick="showManualAdd()" class="card p-4 bg-green-500 text-white font-bold flex flex-col items-center hover:bg-green-600 transition-all">
-            <span class="text-2xl mb-1">➕</span>
-            <span class="text-sm">إضافة يدوية</span>
+        <button onclick="showManualAdd()" class="card p-4 bg-white text-zinc-900 border-2 border-zinc-900 font-bold flex flex-col items-center active:scale-95 transition-transform">
+            <span class="text-xl">➕</span>
+            <span class="text-xs mt-1">إضافة يدوية</span>
         </button>
     </div>
 
-    <div id="scanner-wrap" class="hidden mb-6 animate-pulse">
-        <div class="card p-2 bg-black relative overflow-hidden">
-            <div id="interactive" class="viewport"></div>
-            <button onclick="stopScanner()" class="absolute top-4 left-4 bg-red-500 text-white w-8 h-8 rounded-full font-bold">X</button>
-            <div class="absolute inset-0 border-2 border-green-500 m-12 rounded-lg pointer-events-none opacity-50"></div>
-        </div>
+    <div class="card p-5 min-h-[250px]">
+        <h2 class="font-bold text-gray-800 mb-4 border-b pb-2 flex justify-between items-center">
+            <span>وجبات اليوم</span>
+            <button onclick="clearDay()" class="text-[10px] text-red-400 font-normal">مسح الكل</button>
+        </h2>
+        <ul id="meals-list" class="space-y-3"></ul>
+        <div id="empty-state" class="text-center py-10 text-gray-300 text-sm hidden">لا توجد وجبات لهذا اليوم</div>
     </div>
 
-    <div class="card p-5">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="font-bold text-gray-700 underline decoration-green-300">سجل الوجبات</h2>
-            <button onclick="clearDay()" class="text-xs text-red-400 font-medium">مسح اليوم</button>
-        </div>
-        <ul id="meals-list" class="space-y-4">
-            </ul>
-        <div id="empty-msg" class="text-center py-10 text-gray-300 hidden">
-            لا توجد وجبات مسجلة لهذا اليوم
-        </div>
-    </div>
-
-    <div id="modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6 z-50">
-        <div class="bg-white p-8 rounded-3xl w-full max-w-sm shadow-2xl">
-            <h3 id="product-name" class="font-bold text-2xl mb-2 text-green-600">--</h3>
-            <p class="text-gray-400 text-sm mb-6">السعرات (لكل 100g): <span id="cal-per-100" class="font-bold text-gray-700">0</span></p>
-            
-            <label class="block mb-2 font-bold text-gray-700">الكمية المستهلكة (غرام):</label>
-            <input type="number" id="amount-input" class="w-full border-2 border-gray-100 p-4 rounded-2xl mb-6 text-center text-2xl focus:border-green-500 focus:outline-none" placeholder="0">
-            
-            <div class="flex gap-3">
-                <button onclick="addMealToLog()" class="bg-green-500 text-white flex-[2] py-4 rounded-2xl font-bold text-lg shadow-lg shadow-green-200">إضافة للسجل</button>
-                <button onclick="closeModal()" class="bg-gray-100 text-gray-500 flex-1 py-4 rounded-2xl font-medium">إلغاء</button>
+    <div id="modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-[100]">
+        <div class="bg-white p-8 rounded-[30px] w-full max-w-sm shadow-2xl">
+            <h3 id="product-name" class="font-black text-xl mb-2 text-zinc-800 leading-tight text-center">جاري البحث...</h3>
+            <div class="bg-green-50 p-4 rounded-2xl mb-6 text-center border border-green-100">
+                <span class="text-green-600 text-xs font-bold block mb-1 uppercase">Calories / 100g</span>
+                <span id="cal-per-100" class="text-3xl font-black text-green-700">0</span>
             </div>
+            
+            <label class="block mb-2 text-xs font-bold text-gray-400 text-center">كم غرام تناولت؟</label>
+            <input type="number" id="amount-input" class="w-full border-2 border-gray-100 p-4 rounded-2xl mb-6 text-center text-2xl focus:border-green-500 focus:outline-none bg-gray-50" placeholder="0">
+            
+            <button onclick="addMealToLog()" class="w-full bg-green-500 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-green-200 active:scale-95 transition-transform">تأكيد الإضافة</button>
+            <button onclick="closeModal()" class="w-full text-gray-400 mt-4 text-sm font-medium">إلغاء</button>
         </div>
     </div>
 
     <script>
-        // هيكلية البيانات: { "2024-05-20": [{name: "bread", totalCal: 200}, ...], ... }
+        // التخزين المحلي
         let allData = JSON.parse(localStorage.getItem('calorieTrackerData')) || {};
+        let myGoal = localStorage.getItem('myDailyGoal') || 2500;
         let currentSelectedDate = new Date().toISOString().split('T')[0];
         let currentProduct = { name: '', calories: 0 };
 
-        // تعيين تاريخ اليوم في التقويم عند الفتح
         document.getElementById('date-picker').value = currentSelectedDate;
-
-        function changeDate() {
-            currentSelectedDate = document.getElementById('date-picker').value;
-            updateUI();
-        }
+        document.getElementById('goal-display').innerText = myGoal;
 
         function updateUI() {
             const list = document.getElementById('meals-list');
             const totalDisplay = document.getElementById('total-calories');
-            const emptyMsg = document.getElementById('empty-msg');
-            const displayDate = document.getElementById('display-date-text');
-            
-            displayDate.innerText = new Date(currentSelectedDate).toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
+            const emptyState = document.getElementById('empty-state');
+            const calContainer = document.getElementById('calorie-container');
             
             list.innerHTML = '';
-            let dayMeals = allData[currentSelectedDate] || [];
             let total = 0;
+            let dayMeals = allData[currentSelectedDate] || [];
 
-            if (dayMeals.length === 0) {
-                emptyMsg.classList.remove('hidden');
-            } else {
-                emptyMsg.classList.add('hidden');
-                dayMeals.forEach((meal, index) => {
-                    total += meal.totalCal;
-                    list.innerHTML += `
-                        <li class="flex justify-between items-center p-2 border-b border-gray-50 hover:bg-gray-50 rounded-lg transition-colors">
-                            <div>
-                                <div class="font-bold text-gray-800 text-sm">${meal.name}</div>
-                                <div class="text-[10px] text-gray-400 uppercase tracking-widest">${meal.amount} GRAMS</div>
-                            </div>
-                            <div class="text-left">
-                                <div class="font-black text-green-600">${Math.round(meal.totalCal)}</div>
-                                <button onclick="deleteMeal(${index})" class="text-[9px] text-red-300">حذف</button>
-                            </div>
-                        </li>`;
-                });
-            }
-            
+            if(dayMeals.length === 0) emptyState.classList.remove('hidden');
+            else emptyState.classList.add('hidden');
+
+            dayMeals.forEach((meal, index) => {
+                total += meal.totalCal;
+                list.innerHTML += `
+                    <li class="flex justify-between items-center p-3 bg-white border border-gray-100 rounded-xl shadow-sm">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-sm text-gray-800">${meal.name}</span>
+                            <span class="text-[10px] text-gray-400">${meal.amount} غرام</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="font-black text-green-600">${Math.round(meal.totalCal)}</span>
+                            <button onclick="deleteMeal(${index})" class="text-gray-300 hover:text-red-400">✕</button>
+                        </div>
+                    </li>`;
+            });
+
             totalDisplay.innerText = Math.round(total);
-            // تغيير اللون إذا تجاوز الحد (مثلاً 2500)
-            total > 2500 ? totalDisplay.classList.replace('text-green-600', 'text-red-500') : totalDisplay.classList.replace('text-red-500', 'text-green-600');
             
+            // مراقبة الهدف وتغيير اللون
+            if(total > myGoal) {
+                calContainer.classList.add('over-goal');
+            } else {
+                calContainer.classList.remove('over-goal');
+            }
+
             localStorage.setItem('calorieTrackerData', JSON.stringify(allData));
+        }
+
+        function editGoal() {
+            let newGoal = prompt("أدخل هدف السعرات اليومي الجديد:", myGoal);
+            if(newGoal && !isNaN(newGoal)) {
+                myGoal = newGoal;
+                localStorage.setItem('myDailyGoal', myGoal);
+                document.getElementById('goal-display').innerText = myGoal;
+                updateUI();
+            }
+        }
+
+        function startScanner() {
+            document.getElementById('scanner-section').classList.remove('hidden');
+            Quagga.init({
+                inputStream: { 
+                    name: "Live", type: "LiveStream", target: document.querySelector('#interactive'),
+                    constraints: { width: 400, height: 200, facingMode: "environment" } 
+                },
+                decoder: { readers: ["ean_reader", "ean_8_reader"] }
+            }, (err) => { if(!err) Quagga.start(); });
+
+            Quagga.onDetected((data) => {
+                if(navigator.vibrate) navigator.vibrate(100);
+                fetchProductInfo(data.codeResult.code);
+            });
         }
 
         function fetchProductInfo(code) {
             stopScanner();
-            document.getElementById('product-name').innerText = "جاري جلب البيانات...";
-            showModal();
-            
+            showModal("جاري البحث...");
             fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`)
                 .then(res => res.json())
                 .then(data => {
                     if(data.status === 1) {
+                        let p = data.product;
                         currentProduct = {
-                            name: data.product.product_name || "منتج ألماني",
-                            calories: data.product.nutriments['energy-kcal_100g'] || 0
+                            name: p.product_name_de || p.product_name || "منتج " + code,
+                            calories: p.nutriments['energy-kcal_100g'] || 0
                         };
                         document.getElementById('product-name').innerText = currentProduct.name;
                         document.getElementById('cal-per-100').innerText = currentProduct.calories;
                     } else {
-                        alert("المنتج غير مسجل. أضفه يدوياً.");
-                        closeModal();
+                        document.getElementById('product-name').innerText = "غير مسجل: " + code;
+                        document.getElementById('cal-per-100').innerText = "0";
                     }
-                }).catch(() => { alert("مشكلة في الإنترنت"); closeModal(); });
+                });
         }
 
         function addMealToLog() {
             const amount = document.getElementById('amount-input').value;
             if(!amount) return;
-            
             const totalCal = (currentProduct.calories * amount) / 100;
-            
             if(!allData[currentSelectedDate]) allData[currentSelectedDate] = [];
-            
-            allData[currentSelectedDate].push({
-                name: currentProduct.name,
-                amount: amount,
-                totalCal: totalCal
-            });
-            
+            allData[currentSelectedDate].push({ name: currentProduct.name, amount: amount, totalCal: totalCal });
             closeModal();
             updateUI();
         }
@@ -178,41 +187,17 @@
             updateUI();
         }
 
-        function clearDay() {
-            if(confirm("مسح سجل هذا اليوم بالكامل؟")) {
-                allData[currentSelectedDate] = [];
-                updateUI();
-            }
-        }
-
+        function stopScanner() { Quagga.stop(); document.getElementById('scanner-section').classList.add('hidden'); }
+        function showModal(msg) { if(msg) document.getElementById('product-name').innerText = msg; document.getElementById('modal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('amount-input').value = ''; }
+        function changeDate() { currentSelectedDate = document.getElementById('date-picker').value; updateUI(); }
         function showManualAdd() {
-            const n = prompt("اسم الأكلة:");
-            const c = prompt("السعرات لكل 100 غرام:");
-            if(n && c) {
-                currentProduct = { name: n, calories: parseFloat(c) };
-                showModal();
-            }
+            let n = prompt("اسم المنتج:");
+            let c = prompt("السعرات لكل 100 غرام:");
+            if(n && c) { currentProduct = { name: n, calories: parseFloat(c) }; showModal(); }
         }
+        function clearDay() { if(confirm("حذف جميع وجبات هذا اليوم؟")) { allData[currentSelectedDate] = []; updateUI(); } }
 
-        function showModal() { document.getElementById('modal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
-
-        function startScanner() {
-            document.getElementById('scanner-wrap').classList.remove('hidden');
-            Quagga.init({
-                inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { facingMode: "environment" } },
-                decoder: { readers: ["ean_reader"] }
-            }, (err) => { if(err) return; Quagga.start(); });
-
-            Quagga.onDetected((data) => { fetchProductInfo(data.codeResult.code); });
-        }
-
-        function stopScanner() {
-            Quagga.stop();
-            document.getElementById('scanner-wrap').classList.add('hidden');
-        }
-
-        // تشغيل أولي
         updateUI();
     </script>
 </body>
