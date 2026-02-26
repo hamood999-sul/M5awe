@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>مدربي الرياضي - نسخة المكملات</title>
+    <title>مدربي الرياضي - نسخة المكملات الشاملة</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
@@ -23,7 +23,7 @@
         @keyframes scanning { 0%, 100% { top: 25%; } 50% { top: 75%; } }
         .over-goal { color: #ef4444 !important; }
         .supp-btn { transition: all 0.2s; border: 1px solid #e2e8f0; }
-        .supp-btn.active { background-color: #3b82f6; color: white; border-color: #3b82f6; }
+        .supp-btn.active { background-color: #3b82f6; color: white; border-color: #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
     </style>
 </head>
 <body class="p-4 pb-24">
@@ -53,7 +53,7 @@
     </div>
 
     <div class="card p-5 mb-4 border-r-8 border-green-500">
-        <h2 class="font-bold text-slate-700 mb-3 flex items-center gap-2">💊 المكملات اليومية</h2>
+        <h2 class="font-bold text-slate-700 mb-3 flex items-center gap-2 text-sm italic">💊 سجل المكملات (Checklist)</h2>
         <div id="supps-container" class="flex flex-wrap gap-2">
             </div>
     </div>
@@ -68,7 +68,7 @@
 
     <div class="grid grid-cols-2 gap-4 mb-6">
         <button onclick="startScanner()" class="card p-4 bg-slate-900 text-white font-bold flex flex-col items-center">
-            <span class="text-xl">📷</span><span class="text-xs mt-1 font-bold">سكان</span>
+            <span class="text-xl">📷</span><span class="text-xs mt-1 font-bold">سكان باركود</span>
         </button>
         <button onclick="showManualAdd()" class="card p-4 bg-white border-2 border-slate-900 font-bold flex flex-col items-center">
             <span class="text-xl">➕</span><span class="text-xs mt-1">إضافة يدوية</span>
@@ -91,7 +91,7 @@
                 <div class="bg-gray-50 p-2 rounded-xl"><small class="block text-[9px] text-gray-400">Cal/100</small><b id="p-cal">0</b></div>
                 <div class="bg-orange-50 p-2 rounded-xl"><small class="block text-[9px] text-orange-400">Protein</small><b id="p-prot" class="text-orange-600">0</b></div>
             </div>
-            <label class="block mb-2 text-xs font-bold text-gray-400 text-center">الكمية بـ (<span id="unit-label">غرام</span>):</label>
+            <label class="block mb-2 text-xs font-bold text-gray-400 text-center">الكمية:</label>
             <input type="number" id="amount-input" class="w-full border-2 border-slate-100 p-4 rounded-2xl mb-6 text-center text-3xl outline-none focus:border-blue-500" placeholder="0">
             <button onclick="saveMeal()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg">تأكيد الإضافة</button>
             <button onclick="closeModal()" class="w-full text-slate-400 mt-4 text-sm font-bold">إلغاء</button>
@@ -100,12 +100,13 @@
 
     <script>
         let allData = JSON.parse(localStorage.getItem('gymApp_Data')) || {};
-        let suppsTaken = JSON.parse(localStorage.getItem('gymApp_Supps')) || {}; // سجل المكملات
+        let suppsTaken = JSON.parse(localStorage.getItem('gymApp_Supps')) || {};
         let goals = JSON.parse(localStorage.getItem('gymApp_Goals')) || { cal: 2500, prot: 150 };
         let currentSelectedDate = new Date().toISOString().split('T')[0];
         let tempProd = { unit: 'غرام', servingWeight: 100 };
 
-        const MY_SUPPS = ["فيتامين C", "امينو 2222", "Mk-677", "ماغنيسيوم", "اوميجا 3", "جينسينج"];
+        // القائمة المحدثة للمكملات
+        const MY_SUPPS = ["فيتامين C", "امينو 2222", "Mk-677", "ماغنيسيوم", "اوميجا 3", "جينسينج", "D3+K2", "كرياتين"];
 
         document.getElementById('date-picker').value = currentSelectedDate;
 
@@ -117,7 +118,7 @@
             MY_SUPPS.forEach(s => {
                 const isActive = todaySupps.includes(s);
                 const btn = document.createElement('button');
-                btn.className = `supp-btn px-3 py-2 rounded-xl text-xs font-bold ${isActive ? 'active' : 'bg-white text-slate-600'}`;
+                btn.className = `supp-btn px-3 py-2 rounded-xl text-[10px] font-black uppercase ${isActive ? 'active' : 'bg-white text-slate-500'}`;
                 btn.innerText = s + (isActive ? ' ✓' : '');
                 btn.onclick = () => toggleSupp(s);
                 container.appendChild(btn);
@@ -127,14 +128,12 @@
         function toggleSupp(name) {
             if (!suppsTaken[currentSelectedDate]) suppsTaken[currentSelectedDate] = [];
             const index = suppsTaken[currentSelectedDate].indexOf(name);
-            
             if (index > -1) {
                 suppsTaken[currentSelectedDate].splice(index, 1);
             } else {
                 suppsTaken[currentSelectedDate].push(name);
-                if (navigator.vibrate) navigator.vibrate(50);
+                if (navigator.vibrate) navigator.vibrate(40);
             }
-            
             localStorage.setItem('gymApp_Supps', JSON.stringify(suppsTaken));
             renderSupps();
         }
@@ -142,18 +141,10 @@
         function startScanner() {
             document.getElementById('scanner-section').classList.remove('hidden');
             Quagga.init({
-                inputStream: { 
-                    name: "Live", type: "LiveStream", target: document.querySelector('#interactive'),
-                    constraints: { width: 1280, height: 720, facingMode: "environment", aspectRatio: { min: 1.777, max: 1.778 } } 
-                },
+                inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { width: 1280, height: 720, facingMode: "environment", aspectRatio: 1.77 } },
                 decoder: { readers: ["ean_reader", "ean_8_reader"], multiple: false },
                 locate: true, frequency: 10
-            }, (err) => { 
-                if(!err) {
-                    Quagga.start();
-                    setTimeout(applyCameraLocks, 1000);
-                }
-            });
+            }, (err) => { if(!err) { Quagga.start(); setTimeout(applyCameraLocks, 1000); } });
             Quagga.onDetected(d => { if(navigator.vibrate) navigator.vibrate(100); fetchProductInfo(d.codeResult.code); });
         }
 
@@ -188,11 +179,9 @@
                             unit: unit,
                             servingWeight: servingWeight || 100
                         };
-                        
                         document.getElementById('p-name').innerText = tempProd.name;
                         document.getElementById('p-cal').innerText = tempProd.cal100;
                         document.getElementById('p-prot').innerText = tempProd.prot100;
-                        document.getElementById('unit-label').innerText = tempProd.unit;
                     } else { alert("عذراً، المنتج غير موجود."); closeModal(); }
                 });
         }
