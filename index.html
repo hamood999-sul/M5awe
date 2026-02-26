@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>مدربي الرياضي - النسخة الشاملة</title>
+    <title>مدربي الرياضي - نسخة التثبيت الذكي</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
@@ -11,7 +11,7 @@
         .card { background: white; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
         #scanner-wrap { 
             width: 100%; max-width: 400px; margin: 0 auto; overflow: hidden; 
-            border-radius: 20px; border: 4px solid #3b82f6; height: 200px; 
+            border-radius: 20px; border: 4px solid #3b82f6; height: 220px; 
             position: relative; background: #000; 
         }
         #interactive video { width: 100%; height: 100%; object-fit: cover; }
@@ -20,7 +20,7 @@
             background: rgba(255, 0, 0, 0.5); box-shadow: 0 0 10px red;
             animation: scanning 2s infinite; z-index: 10;
         }
-        @keyframes scanning { 0%, 100% { top: 20%; } 50% { top: 80%; } }
+        @keyframes scanning { 0%, 100% { top: 25%; } 50% { top: 75%; } }
         .over-goal { color: #ef4444 !important; }
     </style>
 </head>
@@ -32,20 +32,19 @@
             <button onclick="editGoals()" class="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold">الأهداف ⚙️</button>
         </div>
         <div class="text-center mb-4">
-            <span class="text-gray-400 text-[10px] block uppercase tracking-widest">السعرات المستهلكة</span>
             <div id="cal-container" class="text-5xl font-black text-slate-800 transition-all">
                 <span id="total-calories">0</span>
             </div>
-            <div class="text-[10px] text-gray-400 mt-1 font-medium">الهدف: <span id="goal-val">2500</span></div>
+            <div class="text-[10px] text-gray-400 mt-1 uppercase">Calories Consumed</div>
         </div>
-        <div class="flex gap-2">
-            <div class="flex-1 bg-orange-50 p-2 rounded-xl text-center border border-orange-100">
+        <div class="flex gap-2 text-center">
+            <div class="flex-1 bg-orange-50 p-2 rounded-xl border border-orange-100">
                 <small class="block text-[9px] text-orange-400 font-bold">بروتين</small><b id="total-protein">0</b>g
             </div>
-            <div class="flex-1 bg-blue-50 p-2 rounded-xl text-center border border-blue-100">
+            <div class="flex-1 bg-blue-50 p-2 rounded-xl border border-blue-100">
                 <small class="block text-[9px] text-blue-400 font-bold">كربوهيدرات</small><b id="total-carbs">0</b>g
             </div>
-            <div class="flex-1 bg-yellow-50 p-2 rounded-xl text-center border border-yellow-100">
+            <div class="flex-1 bg-yellow-50 p-2 rounded-xl border border-yellow-100">
                 <small class="block text-[9px] text-yellow-600 font-bold">دهون</small><b id="total-fat">0</b>g
             </div>
         </div>
@@ -57,40 +56,36 @@
             <div class="laser"></div>
             <button onclick="stopScanner()" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full font-bold z-[60]">✕</button>
         </div>
+        <p class="text-center text-[10px] text-gray-400 mt-2">تم قفل العدسة لمنع التذبذب. ابعد الهاتف 15 سم.</p>
     </div>
 
     <div class="grid grid-cols-2 gap-4 mb-6">
-        <button onclick="startScanner()" class="card p-4 bg-slate-900 text-white font-bold flex flex-col items-center active:scale-95 transition-all">
-            <span class="text-xl">📷</span><span class="text-xs mt-1">مسح باركود</span>
+        <button onclick="startScanner()" class="card p-4 bg-slate-900 text-white font-bold flex flex-col items-center">
+            <span class="text-xl">📷</span><span class="text-xs mt-1 font-bold">SCAN BARCODE</span>
         </button>
-        <button onclick="showManualAdd()" class="card p-4 bg-white border-2 border-slate-900 font-bold flex flex-col items-center active:scale-95 transition-all">
+        <button onclick="showManualAdd()" class="card p-4 bg-white border-2 border-slate-900 font-bold flex flex-col items-center">
             <span class="text-xl">➕</span><span class="text-xs mt-1">إضافة يدوية</span>
         </button>
     </div>
 
-    <div class="card p-5 min-h-[300px]">
+    <div class="card p-5 min-h-[250px]">
         <div class="flex justify-between items-center mb-4 border-b pb-2">
-            <h2 class="font-bold text-slate-700">وجبات اليوم</h2>
-            <button onclick="clearDay()" class="text-[10px] text-red-400 font-bold uppercase underline">مسح السجل</button>
+            <h2 class="font-bold text-slate-700">سجل الوجبات</h2>
+            <button onclick="clearDay()" class="text-[10px] text-red-500 font-bold">مسح الكل</button>
         </div>
         <ul id="meals-list" class="space-y-3"></ul>
-        <div id="empty-msg" class="text-center py-10 text-gray-300 text-sm hidden">لا توجد وجبات مسجلة</div>
     </div>
 
     <div id="modal" class="hidden fixed inset-0 bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-6 z-[100]">
-        <div class="bg-white p-7 rounded-[35px] w-full max-w-sm shadow-2xl">
-            <h3 id="p-name" class="font-black text-xl mb-4 text-center text-slate-800 leading-tight">جاري التحليل...</h3>
-            
+        <div class="bg-white p-7 rounded-[35px] w-full max-w-sm">
+            <h3 id="p-name" class="font-black text-lg mb-4 text-center text-slate-800">جاري التحليل...</h3>
             <div class="grid grid-cols-2 gap-2 mb-6 text-center">
-                <div class="bg-gray-50 p-2 rounded-xl"><small class="block text-[9px] text-gray-400 uppercase">Cal/100</small><b id="p-cal" class="text-lg">0</b></div>
-                <div class="bg-orange-50 p-2 rounded-xl"><small class="block text-[9px] text-orange-400 uppercase">Protein</small><b id="p-prot" class="text-lg text-orange-600">0</b></div>
+                <div class="bg-gray-50 p-2 rounded-xl"><small class="block text-[9px] text-gray-400">Cal/100</small><b id="p-cal">0</b></div>
+                <div class="bg-orange-50 p-2 rounded-xl"><small class="block text-[9px] text-orange-400">Protein</small><b id="p-prot" class="text-orange-600">0</b></div>
             </div>
-
-            <label class="block mb-2 text-xs font-bold text-gray-400 text-center">الكمية التي تناولتها (<span id="unit-label">غرام</span>):</label>
-            <input type="number" id="amount-input" class="w-full border-2 border-slate-100 p-4 rounded-2xl mb-6 text-center text-3xl outline-none focus:border-blue-500 bg-slate-50" placeholder="0">
-            
-            <button onclick="saveMeal()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-blue-200 active:scale-95 transition-all">تأكيد الإضافة</button>
-            <button onclick="closeModal()" class="w-full text-slate-400 mt-4 text-sm font-bold">إلغاء</button>
+            <input type="number" id="amount-input" class="w-full border-2 border-slate-100 p-4 rounded-2xl mb-6 text-center text-3xl outline-none focus:border-blue-500" placeholder="0">
+            <button onclick="saveMeal()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg">تأكيد الإضافة</button>
+            <button onclick="closeModal()" class="w-full text-slate-400 mt-4 text-sm font-bold underline">إلغاء</button>
         </div>
     </div>
 
@@ -101,44 +96,47 @@
         let tempProd = { unit: 'غرام' };
 
         document.getElementById('date-picker').value = currentSelectedDate;
-        document.getElementById('goal-val').innerText = goals.cal;
 
-        function updateUI() {
-            let meals = allData[currentSelectedDate] || [];
-            let totals = { cal: 0, prot: 0, carb: 0, fat: 0 };
-            const list = document.getElementById('meals-list');
-            const emptyMsg = document.getElementById('empty-msg');
-            
-            list.innerHTML = '';
-            if(meals.length === 0) emptyMsg.classList.remove('hidden');
-            else emptyMsg.classList.add('hidden');
-
-            meals.forEach((m, i) => {
-                totals.cal += m.cal; totals.prot += m.prot; totals.carb += m.carb; totals.fat += m.fat;
-                let displayAmount = m.unit === 'مللتر' && m.amount >= 1000 ? (m.amount/1000).toFixed(1) + ' لتر' : m.amount + ' ' + m.unit;
-                
-                list.innerHTML += `
-                    <li class="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                        <div class="flex flex-col">
-                            <span class="font-bold text-sm text-slate-800">${m.name}</span>
-                            <span class="text-[10px] text-gray-400">${displayAmount}</span>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <div class="text-left font-black text-blue-600 text-xs">${Math.round(m.cal)} Cal<br><span class="text-orange-400">P: ${Math.round(m.prot)}g</span></div>
-                            <button onclick="deleteMeal(${i})" class="text-slate-200 hover:text-red-400 transition-colors">✕</button>
-                        </div>
-                    </li>`;
+        function startScanner() {
+            document.getElementById('scanner-section').classList.remove('hidden');
+            Quagga.init({
+                inputStream: { 
+                    name: "Live", type: "LiveStream", target: document.querySelector('#interactive'),
+                    constraints: { 
+                        width: 1280, height: 720, 
+                        facingMode: "environment",
+                        aspectRatio: { min: 1.777, max: 1.778 } // قفل الأبعاد لـ 16:9
+                    } 
+                },
+                decoder: { 
+                    readers: ["ean_reader", "ean_8_reader"],
+                    multiple: false // منع قراءة عدة أكواد في وقت واحد للثبات
+                },
+                locate: true,
+                frequency: 10 // تقليل عدد مرات القراءة في الثانية لزيادة الدقة
+            }, (err) => { 
+                if(!err) {
+                    Quagga.start();
+                    setTimeout(applyCameraLocks, 1000); // تطبيق القفل بعد ثانية من التشغيل
+                }
             });
 
-            document.getElementById('total-calories').innerText = Math.round(totals.cal);
-            document.getElementById('total-protein').innerText = Math.round(totals.prot);
-            document.getElementById('total-carbs').innerText = Math.round(totals.carb);
-            document.getElementById('total-fat').innerText = Math.round(totals.fat);
-            
-            if(totals.cal > goals.cal) document.getElementById('cal-container').classList.add('over-goal');
-            else document.getElementById('cal-container').classList.remove('over-goal');
+            Quagga.onDetected(d => { fetchProductInfo(d.codeResult.code); });
+        }
 
-            localStorage.setItem('gymApp_Data', JSON.stringify(allData));
+        async function applyCameraLocks() {
+            const track = Quagga.CameraAccess.getActiveTrack();
+            if (track && typeof track.getCapabilities === 'function') {
+                const caps = track.getCapabilities();
+                const constraints = {};
+                
+                // تثبيت الزووم عند 2x لمنع تبديل العدسات المزعج
+                if (caps.zoom) constraints.zoom = 2.0;
+                // محاولة قفل التركيز
+                if (caps.focusMode && caps.focusMode.includes('continuous')) constraints.focusMode = 'continuous';
+                
+                try { await track.applyConstraints({ advanced: [constraints] }); } catch(e) { console.error(e); }
+            }
         }
 
         function fetchProductInfo(code) {
@@ -148,9 +146,7 @@
                     if(d.status === 1) {
                         let p = d.product;
                         let n = p.nutriments;
-                        // تحديد الوحدة بناءً على نوع المنتج
                         let isLiquid = p.serving_quantity_unit === 'ml' || p.product_name_de?.toLowerCase().includes('wasser') || p.product_name_de?.toLowerCase().includes('saft');
-                        
                         tempProd = {
                             name: p.product_name_de || p.product_name || "منتج " + code,
                             cal100: n['energy-kcal_100g'] || 0,
@@ -162,8 +158,7 @@
                         document.getElementById('p-name').innerText = tempProd.name;
                         document.getElementById('p-cal').innerText = tempProd.cal100;
                         document.getElementById('p-prot').innerText = tempProd.prot100;
-                        document.getElementById('unit-label').innerText = tempProd.unit;
-                    } else { alert("عذراً، المنتج غير مسجل."); closeModal(); }
+                    } else { alert("عذراً، المنتج غير موجود."); closeModal(); }
                 });
         }
 
@@ -179,50 +174,37 @@
             closeModal(); updateUI();
         }
 
-        function deleteMeal(index) { 
-            if(confirm("حذف هذه الوجبة؟")) {
-                allData[currentSelectedDate].splice(index, 1); 
-                updateUI(); 
-            }
-        }
-        
-        function clearDay() { 
-            if(confirm("هل تريد مسح سجل هذا اليوم بالكامل؟")) { 
-                allData[currentSelectedDate] = []; updateUI(); 
-            } 
-        }
-
-        function editGoals() {
-            let c = prompt("هدف السعرات اليومي الجديد:", goals.cal);
-            if(c) { 
-                goals.cal = c; 
-                localStorage.setItem('gymApp_Goals', JSON.stringify(goals)); 
-                document.getElementById('goal-val').innerText = c;
-                updateUI(); 
-            }
-        }
-
-        function startScanner() {
-            document.getElementById('scanner-section').classList.remove('hidden');
-            Quagga.init({
-                inputStream: { 
-                    name: "Live", type: "LiveStream", target: document.querySelector('#interactive'),
-                    constraints: { width: { min: 1280 }, height: { min: 720 }, facingMode: "environment", focusMode: "continuous" } 
-                },
-                decoder: { readers: ["ean_reader", "ean_8_reader"] },
-                locate: true
-            }, (err) => { if(!err) Quagga.start(); });
-            Quagga.onDetected(d => { if(navigator.vibrate) navigator.vibrate(100); fetchProductInfo(d.codeResult.code); });
+        function updateUI() {
+            let meals = allData[currentSelectedDate] || [];
+            let totals = { cal: 0, prot: 0, carb: 0, fat: 0 };
+            const list = document.getElementById('meals-list');
+            list.innerHTML = '';
+            meals.forEach((m, i) => {
+                totals.cal += m.cal; totals.prot += m.prot; totals.carb += m.carb; totals.fat += m.fat;
+                list.innerHTML += `
+                    <li class="flex justify-between items-center p-3 bg-white border border-slate-50 rounded-2xl">
+                        <div class="flex flex-col"><span class="font-bold text-xs">${m.name}</span><span class="text-[10px] text-gray-400">${m.amount} ${m.unit}</span></div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-left font-black text-blue-600 text-[10px]">${Math.round(m.cal)} Cal<br><span class="text-orange-400">P: ${Math.round(m.prot)}g</span></div>
+                            <button onclick="deleteMeal(${i})" class="text-slate-200 hover:text-red-400">✕</button>
+                        </div>
+                    </li>`;
+            });
+            document.getElementById('total-calories').innerText = Math.round(totals.cal);
+            document.getElementById('total-protein').innerText = Math.round(totals.prot);
+            document.getElementById('total-carbs').innerText = Math.round(totals.carb);
+            document.getElementById('total-fat').innerText = Math.round(totals.fat);
+            localStorage.setItem('gymApp_Data', JSON.stringify(allData));
         }
 
+        function deleteMeal(i) { if(confirm("حذف؟")) { allData[currentSelectedDate].splice(i, 1); updateUI(); } }
+        function clearDay() { if(confirm("مسح الكل؟")) { allData[currentSelectedDate] = []; updateUI(); } }
         function stopScanner() { Quagga.stop(); document.getElementById('scanner-section').classList.add('hidden'); }
         function showModal(m) { if(m) document.getElementById('p-name').innerText = m; document.getElementById('modal').classList.remove('hidden'); }
         function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('amount-input').value = ''; }
         function changeDate() { currentSelectedDate = document.getElementById('date-picker').value; updateUI(); }
-        function showManualAdd() {
-            let n = prompt("اسم المنتج:"); let c = prompt("السعرات لكل 100:");
-            if(n && c) { tempProd = {name:n, cal100:c, prot100:0, carb100:0, fat100:0, unit:'غرام'}; showModal(); }
-        }
+        function showManualAdd() { let n = prompt("الاسم:"); let c = prompt("السعرات/100:"); if(n && c) { tempProd = {name:n, cal100:c, prot100:0, carb100:0, fat100:0, unit:'غرام'}; showModal(); } }
+        function editGoals() { let c = prompt("الهدف الجديد:", goals.cal); if(c) { goals.cal = c; updateUI(); } }
 
         updateUI();
     </script>
