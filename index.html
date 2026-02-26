@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>مدربي الرياضي - النسخة النهائية المستقرة</title>
+    <title>مدربي الرياضي - نسخة الحصص الذكية</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
@@ -29,7 +29,7 @@
     <div class="card p-6 mb-4 border-t-8 border-blue-600">
         <div class="flex justify-between items-center mb-4">
             <input type="date" id="date-picker" onchange="changeDate()" class="bg-gray-100 rounded-lg px-2 py-1 text-xs font-bold outline-none">
-            <button onclick="editGoals()" class="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold">الأهداف ⚙️</button>
+            <button onclick="editGoals()" class="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold">تعديل الأهداف ⚙️</button>
         </div>
         <div class="text-center mb-4">
             <div id="cal-container" class="text-5xl font-black text-slate-800 transition-all">
@@ -56,12 +56,11 @@
             <div class="laser"></div>
             <button onclick="stopScanner()" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full font-bold z-[60]">✕</button>
         </div>
-        <p class="text-center text-[10px] text-gray-400 mt-2">وضع التثبيت نشط (زووم $2x$). ابعد الهاتف مسافة بسيطة.</p>
     </div>
 
     <div class="grid grid-cols-2 gap-4 mb-6">
         <button onclick="startScanner()" class="card p-4 bg-slate-900 text-white font-bold flex flex-col items-center">
-            <span class="text-xl">📷</span><span class="text-xs mt-1 font-bold">SCAN BARCODE</span>
+            <span class="text-xl">📷</span><span class="text-xs mt-1 font-bold">سكان</span>
         </button>
         <button onclick="showManualAdd()" class="card p-4 bg-white border-2 border-slate-900 font-bold flex flex-col items-center">
             <span class="text-xl">➕</span><span class="text-xs mt-1">إضافة يدوية</span>
@@ -70,7 +69,7 @@
 
     <div class="card p-5 min-h-[250px]">
         <div class="flex justify-between items-center mb-4 border-b pb-2">
-            <h2 class="font-bold text-slate-700">سجل الوجبات</h2>
+            <h2 class="font-bold text-slate-700">وجبات اليوم</h2>
             <button onclick="clearDay()" class="text-[10px] text-red-500 font-bold underline uppercase">مسح السجل</button>
         </div>
         <ul id="meals-list" class="space-y-3"></ul>
@@ -97,7 +96,7 @@
         let allData = JSON.parse(localStorage.getItem('gymApp_Data')) || {};
         let goals = JSON.parse(localStorage.getItem('gymApp_Goals')) || { cal: 2500, prot: 150 };
         let currentSelectedDate = new Date().toISOString().split('T')[0];
-        let tempProd = { unit: 'غرام' };
+        let tempProd = { unit: 'غرام', servingWeight: 100 };
 
         document.getElementById('date-picker').value = currentSelectedDate;
 
@@ -134,17 +133,31 @@
                     if(d.status === 1) {
                         let p = d.product;
                         let n = p.nutriments;
-                        // ذكاء تحديد الوحدة (سوائل أم صلب)
-                        let isLiquid = p.serving_quantity_unit === 'ml' || p.product_name_de?.toLowerCase().includes('wasser') || p.product_name_de?.toLowerCase().includes('saft');
+                        let fullName = (p.product_name_de || p.product_name || "").toLowerCase();
+                        let quantityStr = (p.quantity || "").toLowerCase();
                         
+                        // تحديد السوائل
+                        let isLiquid = p.serving_quantity_unit === 'ml' || fullName.includes('wasser') || fullName.includes('water') || fullName.includes('saft') || fullName.includes('juice') || fullName.includes('drink') || quantityStr.includes('l') || quantityStr.includes('ml');
+                        
+                        // تحديد "القطعة" (Portion)
+                        let servingWeight = n['energy-kcal_serving'] ? (n['energy-kcal_serving'] / n['energy-kcal_100g']) * 100 : null;
+                        let unit = isLiquid ? 'مللتر' : 'غرام';
+                        
+                        // إذا وجدنا وزن للحصة (مثل مربع جبنة أو قطعة شوكولاتة)
+                        if (servingWeight && servingWeight > 0 && servingWeight < 100) {
+                            unit = 'قطعة (Portion)';
+                        }
+
                         tempProd = {
                             name: p.product_name_de || p.product_name || "منتج " + code,
                             cal100: n['energy-kcal_100g'] || 0,
                             prot100: n['proteins_100g'] || 0,
                             carb100: n['carbohydrates_100g'] || 0,
                             fat100: n['fat_100g'] || 0,
-                            unit: isLiquid ? 'مللتر' : 'غرام'
+                            unit: unit,
+                            servingWeight: servingWeight || 100
                         };
+                        
                         document.getElementById('p-name').innerText = tempProd.name;
                         document.getElementById('p-cal').innerText = tempProd.cal100;
                         document.getElementById('p-prot').innerText = tempProd.prot100;
@@ -157,10 +170,18 @@
             let val = document.getElementById('amount-input').value;
             if(!val) return;
             if(!allData[currentSelectedDate]) allData[currentSelectedDate] = [];
+            
+            // حساب الوزن الفعلي إذا كانت الوحدة "قطعة"
+            let actualWeight = tempProd.unit.includes('قطعة') ? (val * tempProd.servingWeight) : val;
+
             allData[currentSelectedDate].push({
-                name: tempProd.name, amount: val, unit: tempProd.unit,
-                cal: (tempProd.cal100 * val)/100, prot: (tempProd.prot100 * val)/100,
-                carb: (tempProd.carb100 * val)/100, fat: (tempProd.fat100 * val)/100
+                name: tempProd.name, 
+                amount: val, 
+                unit: tempProd.unit,
+                cal: (tempProd.cal100 * actualWeight)/100, 
+                prot: (tempProd.prot100 * actualWeight)/100,
+                carb: (tempProd.carb100 * actualWeight)/100, 
+                fat: (tempProd.fat100 * actualWeight)/100
             });
             closeModal(); updateUI();
         }
@@ -177,15 +198,15 @@
 
             meals.forEach((m, i) => {
                 totals.cal += m.cal; totals.prot += m.prot; totals.carb += m.carb; totals.fat += m.fat;
-                // عرض لتر إذا تجاوز 1000 مللتر
-                let amountShow = m.unit === 'مللتر' && m.amount >= 1000 ? (m.amount/1000).toFixed(1) + ' لتر' : m.amount + ' ' + m.unit;
+                let unitLabel = m.unit.includes('قطعة') ? 'قطعة' : m.unit;
+                let amountShow = m.unit === 'مللتر' && m.amount >= 1000 ? (m.amount/1000).toFixed(1) + ' لتر' : m.amount + ' ' + unitLabel;
                 
                 list.innerHTML += `
-                    <li class="flex justify-between items-center p-3 bg-white border border-slate-50 rounded-2xl">
+                    <li class="flex justify-between items-center p-3 bg-white border border-slate-50 rounded-2xl shadow-sm">
                         <div class="flex flex-col"><span class="font-bold text-xs">${m.name}</span><span class="text-[10px] text-gray-400">${amountShow}</span></div>
                         <div class="flex items-center gap-3">
                             <div class="text-left font-black text-blue-600 text-[10px]">${Math.round(m.cal)} Cal<br><span class="text-orange-400">P: ${Math.round(m.prot)}g</span></div>
-                            <button onclick="deleteMeal(${i})" class="text-slate-200 hover:text-red-400 transition-all p-1">✕</button>
+                            <button onclick="deleteMeal(${i})" class="text-slate-200 hover:text-red-400 transition-all p-1 font-bold">✕</button>
                         </div>
                     </li>`;
             });
@@ -200,14 +221,14 @@
             localStorage.setItem('gymApp_Data', JSON.stringify(allData));
         }
 
-        function deleteMeal(i) { if(confirm("حذف هذه الوجبة؟")) { allData[currentSelectedDate].splice(i, 1); updateUI(); } }
-        function clearDay() { if(confirm("مسح السجل بالكامل؟")) { allData[currentSelectedDate] = []; updateUI(); } }
+        function deleteMeal(i) { if(confirm("حذف؟")) { allData[currentSelectedDate].splice(i, 1); updateUI(); } }
+        function clearDay() { if(confirm("مسح السجل؟")) { allData[currentSelectedDate] = []; updateUI(); } }
         function stopScanner() { Quagga.stop(); document.getElementById('scanner-section').classList.add('hidden'); }
         function showModal(m) { if(m) document.getElementById('p-name').innerText = m; document.getElementById('modal').classList.remove('hidden'); }
         function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('amount-input').value = ''; }
         function changeDate() { currentSelectedDate = document.getElementById('date-picker').value; updateUI(); }
-        function showManualAdd() { let n = prompt("الاسم:"); let c = prompt("السعرات/100:"); if(n && c) { tempProd = {name:n, cal100:c, prot100:0, carb100:0, fat100:0, unit:'غرام'}; showModal(); } }
-        function editGoals() { let c = prompt("هدفك الجديد للسعرات:", goals.cal); if(c) { goals.cal = c; updateUI(); } }
+        function showManualAdd() { let n = prompt("الاسم:"); let c = prompt("السعرات/100:"); if(n && c) { tempProd = {name:n, cal100:c, prot100:0, carb100:0, fat100:0, unit:'غرام', servingWeight:100}; showModal(); } }
+        function editGoals() { let c = prompt("الهدف الجديد:", goals.cal); if(c) { goals.cal = c; updateUI(); } }
 
         updateUI();
     </script>
