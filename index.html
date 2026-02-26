@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مدربي الرياضي - حساب السعرات</title>
+    <title>مدربي الرياضي - النسخة المصححة</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; touch-action: manipulation; }
         .card { background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        #interactive video, #interactive canvas { width: 100%; height: auto; border-radius: 10px; }
+        /* حل مشكلة التداخل */
+        #modal { z-index: 9999; } 
     </style>
 </head>
 <body class="p-4">
@@ -21,48 +25,48 @@
     </div>
 
     <div class="grid grid-cols-2 gap-4 mb-4">
-        <button onclick="startScanner()" class="card p-4 bg-green-500 text-white font-bold flex flex-col items-center">
+        <button onclick="startScanner()" class="card p-4 bg-green-500 text-white font-bold flex flex-col items-center shadow-lg active:scale-95 transition-transform">
             <span>📷 مسح باركود</span>
-            <small class="font-normal text-xs">(منتجات ألمانية)</small>
         </button>
-        <button onclick="showManualAdd()" class="card p-4 bg-blue-500 text-white font-bold flex flex-col items-center">
+        <button onclick="showManualAdd()" class="card p-4 bg-blue-500 text-white font-bold flex flex-col items-center shadow-lg active:scale-95 transition-transform">
             <span>➕ إضافة يدوية</span>
-            <small class="font-normal text-xs">(اسم السلعة)</small>
         </button>
     </div>
 
-    <div id="scanner-container" class="hidden card p-2 mb-4 bg-black relative">
-        <div id="interactive" class="viewport h-64"></div>
-        <button onclick="stopScanner()" class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded text-xs">إغلاق</button>
+    <div id="scanner-wrap" class="hidden mb-4">
+        <div class="card p-2 bg-black relative">
+            <div id="interactive" class="viewport"></div>
+            <button onclick="stopScanner()" class="absolute top-2 right-2 bg-red-600 text-white px-3 py-1 rounded-full font-bold">إغلاق X</button>
+        </div>
+        <p class="text-center text-sm mt-2 text-gray-500">ضع الباركود في منتصف المربع</p>
     </div>
 
     <div class="card p-4">
         <h2 class="font-bold mb-4 border-b pb-2">وجبات اليوم:</h2>
-        <ul id="meals-list" class="space-y-3">
-            </ul>
+        <ul id="meals-list" class="space-y-3"></ul>
+        <button onclick="clearAll()" class="mt-6 text-xs text-red-400 underline w-full text-center">مسح سجل اليوم</button>
     </div>
 
-    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6">
-        <div class="bg-white p-6 rounded-xl w-full max-w-sm text-right">
-            <h3 id="product-name" class="font-bold text-lg mb-2 text-blue-600">منتج جديد</h3>
-            <p class="text-sm text-gray-500 mb-4">السعرات لكل 100 جرام: <span id="cal-per-100">0</span></p>
-            <label class="block mb-2">كم غرام أكلت؟</label>
-            <input type="number" id="amount-input" class="w-full border p-2 rounded mb-4" placeholder="مثلاً 150">
-            <div class="flex gap-2">
-                <button onclick="addMealToLog()" class="bg-green-500 text-white flex-1 p-2 rounded font-bold">إضافة</button>
-                <button onclick="closeModal()" class="bg-gray-300 flex-1 p-2 rounded">إلغاء</button>
+    <div id="modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-6">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm">
+            <h3 id="product-name" class="font-bold text-xl mb-2 text-blue-600">جاري التحميل...</h3>
+            <p class="text-gray-500 mb-4">السعرات (لكل 100 جرام): <span id="cal-per-100" class="font-bold text-black">0</span></p>
+            
+            <label class="block mb-2 font-bold">الكمية التي تناولتها (غرام):</label>
+            <input type="number" id="amount-input" autofocus class="w-full border-2 border-blue-100 p-3 rounded-lg mb-4 text-center text-xl" placeholder="مثلاً 150">
+            
+            <div class="flex gap-3">
+                <button onclick="addMealToLog()" class="bg-green-500 text-white flex-[2] p-3 rounded-lg font-bold text-lg">إضافة للسجل</button>
+                <button onclick="closeModal()" class="bg-gray-200 text-gray-700 flex-1 p-3 rounded-lg">إلغاء</button>
             </div>
         </div>
     </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 
     <script>
         let currentProduct = { name: '', calories: 0 };
         let meals = JSON.parse(localStorage.getItem('myMeals')) || [];
 
-        // تحديث التاريخ
-        document.getElementById('date-display').innerText = new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('date-display').innerText = new Date().toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
 
         function updateUI() {
             const list = document.getElementById('meals-list');
@@ -73,21 +77,22 @@
             meals.forEach((meal, index) => {
                 total += meal.totalCal;
                 list.innerHTML += `
-                    <li class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border-r-4 border-blue-400">
+                    <li class="flex justify-between items-center bg-gray-50 p-4 rounded-xl border-r-4 border-blue-500 animate-in fade-in">
                         <div>
-                            <div class="font-bold">${meal.name}</div>
-                            <div class="text-xs text-gray-400">${meal.amount} غرام</div>
+                            <div class="font-bold text-gray-800">${meal.name}</div>
+                            <div class="text-xs text-gray-500">${meal.amount} غرام</div>
                         </div>
-                        <div class="text-left font-bold text-blue-500">${meal.totalCal} سعرة</div>
-                    </li>
-                `;
+                        <div class="text-left font-bold text-blue-600">${Math.round(meal.totalCal)} سعرة</div>
+                    </li>`;
             });
             totalDisplay.innerText = Math.round(total);
             localStorage.setItem('myMeals', JSON.stringify(meals));
         }
 
-        // البحث عن منتج ألماني بواسطة الباركود
         function fetchProductInfo(code) {
+            stopScanner(); // إيقاف الكاميرا فوراً عند العثور على كود
+            showModal("جاري البحث...");
+            
             fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`)
                 .then(res => res.json())
                 .then(data => {
@@ -96,17 +101,24 @@
                             name: data.product.product_name || "منتج غير معروف",
                             calories: data.product.nutriments['energy-kcal_100g'] || 0
                         };
-                        showModal();
+                        document.getElementById('product-name').innerText = currentProduct.name;
+                        document.getElementById('cal-per-100').innerText = currentProduct.calories;
                     } else {
-                        alert("عذراً، لم نجد هذا المنتج في قاعدة البيانات الألمانية.");
+                        alert("لم يتم العثور على المنتج. حاول الإضافة اليدوية.");
+                        closeModal();
                     }
-                });
+                }).catch(() => { alert("خطأ في الاتصال بالإنترنت"); closeModal(); });
         }
 
-        function showModal() {
-            document.getElementById('product-name').innerText = currentProduct.name;
-            document.getElementById('cal-per-100').innerText = currentProduct.calories;
+        function showModal(msg = "") {
+            if(msg) document.getElementById('product-name').innerText = msg;
             document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('amount-input').value = '';
+        }
+
+        function showManualAdd() {
+            currentProduct = { name: prompt("اسم الوجبة/المنتج:") || "وجبة يدوية", calories: prompt("السعرات لكل 100 غرام:") || 0 };
+            if(currentProduct.name) showModal();
         }
 
         function addMealToLog() {
@@ -118,29 +130,33 @@
             updateUI();
         }
 
-        function closeModal() { document.getElementById('modal').classList.add('hidden'); stopScanner(); }
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
 
-        // تشغيل الكاميرا
         function startScanner() {
-            document.getElementById('scanner-container').classList.remove('hidden');
+            document.getElementById('scanner-wrap').classList.remove('hidden');
             Quagga.init({
-                inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive') },
-                decoder: { readers: ["ean_reader"] }
-            }, function(err) {
-                if (err) { console.log(err); return; }
+                inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { facingMode: "environment" } },
+                decoder: { readers: ["ean_reader", "ean_8_reader"] }
+            }, (err) => {
+                if (err) { alert("خطأ في تشغيل الكاميرا"); return; }
                 Quagga.start();
             });
 
-            Quagga.onDetected(function(data) {
+            Quagga.onDetected((data) => {
+                // تفعيل اهتزاز بسيط عند النجاح (إذا يدعم المتصفح)
+                if(navigator.vibrate) navigator.vibrate(100);
                 fetchProductInfo(data.codeResult.code);
-                Quagga.stop();
             });
         }
 
-        function stopScanner() { 
-            Quagga.stop(); 
-            document.getElementById('scanner-container').classList.add('hidden'); 
+        function stopScanner() {
+            Quagga.stop();
+            document.getElementById('scanner-wrap').classList.add('hidden');
         }
+
+        function clearAll() { if(confirm("هل تريد مسح جميع وجبات اليوم؟")) { meals = []; updateUI(); } }
 
         updateUI();
     </script>
