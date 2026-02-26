@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MyX1</title>
+    <title>مدربي الرياضي - النسخة الذكية</title>
     
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💪%3C/text%3E%3C/svg%3E">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💪%3C/text%3E%3C/svg%3E">
@@ -105,7 +105,7 @@
 
         let currentSelectedDate = new Date().toISOString().split('T')[0];
         let tempProd = {};
-        let clickTimer = null; // متغير للمؤقت
+        let clickTimer = null;
 
         const MY_SUPPS = ["فيتامين C", "امينو 2222", "Mk-677", "ماغنيسيوم", "اوميجا 3", "D3+K2", "كرياتين"];
         const MY_WORKOUTS = ["Push", "Pull", "Leg", "صدر + تراي", "ضهر + باي", "اكتاف", "كارديو", "راحة"];
@@ -113,7 +113,6 @@
         document.getElementById('date-picker').value = currentSelectedDate;
 
         function renderLists() {
-            // رندر المفضلات مع نظام النقرة المزدوجة المحسن
             const fContainer = document.getElementById('fav-foods-container');
             fContainer.innerHTML = myFavFoods.length ? '' : '<span class="text-gray-300 text-[10px]">أضف أكلة يدوية لتظهر هنا..</span>';
             
@@ -121,27 +120,20 @@
                 const btn = document.createElement('button');
                 btn.className = 'fav-food-btn';
                 btn.innerText = food.name;
-                
-                // حل مشكلة التداخل بين النقرة الواحدة والنقرتين
                 btn.onclick = (e) => {
                     if (clickTimer == null) {
-                        // النقرة الأولى: نبدأ المؤقت
                         clickTimer = setTimeout(() => {
                             clickTimer = null;
-                            addFavFood(index); // تنفيذ الإضافة بعد التأكد أنها ليست نقرة مزدوجة
-                        }, 300); // ننتظر 300 جزء من الثانية
+                            addFavFood(index);
+                        }, 300);
                     } else {
-                        // النقرة الثانية قبل انتهاء المؤقت: نقرة مزدوجة
                         clearTimeout(clickTimer);
                         clickTimer = null;
-                        removeFavFood(index); // تنفيذ الحذف
+                        removeFavFood(index);
                     }
                 };
-
                 fContainer.appendChild(btn);
             });
-
-            // رندر المكملات والتمارين
             renderSuppsAndWorkouts();
         }
 
@@ -161,9 +153,60 @@
             });
         }
 
+        function startScanner() {
+            document.getElementById('scanner-section').classList.remove('hidden');
+            Quagga.init({
+                inputStream: { 
+                    name: "Live", 
+                    type: "LiveStream", 
+                    target: document.querySelector('#interactive'),
+                    constraints: { facingMode: "environment", aspectRatio: 1.77 } 
+                },
+                locate: true,
+                decoder: { 
+                    readers: ["ean_reader", "ean_8_reader", "code_128_reader", "upc_reader"] 
+                }
+            }, (err) => { 
+                if(!err) {
+                    Quagga.start();
+                } else {
+                    alert("خطأ في تشغيل الكاميرا");
+                }
+            });
+            Quagga.onDetected(d => { 
+                if(navigator.vibrate) navigator.vibrate(100); 
+                fetchProductInfo(d.codeResult.code); 
+            });
+        }
+
+        function fetchProductInfo(code) {
+            stopScanner();
+            document.getElementById('p-name').innerText = "جاري البحث...";
+            showModal();
+            fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`)
+                .then(r => r.json()).then(d => {
+                    if(d.status === 1) {
+                        let n = d.product.nutriments;
+                        tempProd = { 
+                            name: d.product.product_name || "منتج غير معروف", 
+                            cal100: n['energy-kcal_100g'] || 0, 
+                            prot100: n['proteins_100g'] || 0, 
+                            carb100: n['carbohydrates_100g'] || 0, 
+                            fat100: n['fat_100g'] || 0 
+                        };
+                        document.getElementById('p-name').innerText = tempProd.name;
+                    } else {
+                        alert("المنتج غير موجود في قاعدة البيانات");
+                        closeModal();
+                    }
+                }).catch(() => {
+                    alert("خطأ في الاتصال بالإنترنت");
+                    closeModal();
+                });
+        }
+
         function removeFavFood(index) {
-            const name = myFavFoods[index].name;
-            if (confirm(`هل تريد حذف "${name}" من المفضلات؟`)) {
+            if (confirm(`حذف من المفضلات؟`)) {
                 myFavFoods.splice(index, 1);
                 localStorage.setItem('gymApp_FavFoods', JSON.stringify(myFavFoods));
                 renderLists();
@@ -171,19 +214,18 @@
         }
 
         function addFavFood(index) {
-            const food = myFavFoods[index];
-            tempProd = food;
-            document.getElementById('p-name').innerText = food.name;
+            tempProd = myFavFoods[index];
+            document.getElementById('p-name').innerText = tempProd.name;
             showModal();
         }
 
         function showManualAdd() {
             const n = prompt("اسم الأكلة:");
             if (!n) return;
-            const cal = prompt("السعرات لكل 100غ:", "0");
-            const prot = prompt("البروتين لكل 100غ:", "0");
-            const carb = prompt("الكارب لكل 100غ:", "0");
-            const fat = prompt("الدهون لكل 100غ:", "0");
+            const cal = prompt("السعرات / 100غ:", "0");
+            const prot = prompt("البروتين / 100غ:", "0");
+            const carb = prompt("الكارب / 100غ:", "0");
+            const fat = prompt("الدهون / 100غ:", "0");
 
             tempProd = { 
                 name: n, 
@@ -206,7 +248,6 @@
             let val = document.getElementById('amount-input').value; 
             if(!val) return;
             if(!allData[currentSelectedDate]) allData[currentSelectedDate] = [];
-            
             let factor = val / 100;
             allData[currentSelectedDate].push({
                 name: tempProd.name,
@@ -216,7 +257,6 @@
                 carb: tempProd.carb100 * factor,
                 fat: tempProd.fat100 * factor
             });
-            
             closeModal();
             updateUI();
         }
@@ -225,62 +265,17 @@
             let meals = allData[currentSelectedDate] || [];
             let totals = { cal: 0, prot: 0, carb: 0, fat: 0 };
             const list = document.getElementById('meals-list');
-            list.innerHTML = meals.length ? '' : '<div class="text-center py-10 text-gray-300 italic text-xs">لا يوجد وجبات اليوم</div>';
-            
+            list.innerHTML = meals.length ? '' : '<div class="text-center py-10 text-gray-300 italic text-xs">لا يوجد وجبات</div>';
             meals.forEach((m, i) => {
                 totals.cal += m.cal; totals.prot += m.prot; totals.carb += m.carb; totals.fat += m.fat;
-                list.innerHTML += `
-                    <li class="flex justify-between items-center p-3 bg-white border border-slate-50 rounded-2xl shadow-sm">
-                        <div class="flex flex-col">
-                            <span class="font-bold text-xs">${m.name}</span>
-                            <span class="text-[9px] text-gray-400">${m.amount} غرام</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="text-left font-black text-blue-600 text-[10px] leading-tight">
-                                ${Math.round(m.cal)} Cal<br>
-                                <span class="text-orange-400">P: ${m.prot.toFixed(1)}g</span>
-                            </div>
-                            <button onclick="deleteMeal(${i})" class="text-red-300 px-2 text-lg">✕</button>
-                        </div>
-                    </li>`;
+                list.innerHTML += `<li class="flex justify-between items-center p-3 bg-white border border-slate-50 rounded-2xl shadow-sm"><div class="flex flex-col"><span class="font-bold text-xs">${m.name}</span><span class="text-[9px] text-gray-400">${m.amount} غرام</span></div><div class="flex items-center gap-3"><div class="text-left font-black text-blue-600 text-[10px] leading-tight">${Math.round(m.cal)} Cal<br><span class="text-orange-400">P: ${m.prot.toFixed(1)}g</span></div><button onclick="deleteMeal(${i})" class="text-red-300 px-2 text-lg">✕</button></div></li>`;
             });
-
             document.getElementById('total-calories').innerText = Math.round(totals.cal);
             document.getElementById('total-protein').innerText = Math.round(totals.prot);
             document.getElementById('total-carbs').innerText = Math.round(totals.carb);
             document.getElementById('total-fat').innerText = Math.round(totals.fat);
-            
             localStorage.setItem('gymApp_Data', JSON.stringify(allData));
             renderLists();
-        }
-
-        // دوال مساعدة
-        function toggleWorkout(name) {
-            if (!workoutsDone[currentSelectedDate]) workoutsDone[currentSelectedDate] = [];
-            const idx = workoutsDone[currentSelectedDate].indexOf(name);
-            if (idx > -1) workoutsDone[currentSelectedDate].splice(idx, 1);
-            else if (workoutsDone[currentSelectedDate].length < 2) workoutsDone[currentSelectedDate].push(name);
-            localStorage.setItem('gymApp_Workouts', JSON.stringify(workoutsDone));
-            renderLists();
-        }
-
-        function toggleItem(name, type) {
-            let store = type === 'supp' ? suppsTaken : workoutsDone;
-            if (!store[currentSelectedDate]) store[currentSelectedDate] = [];
-            const idx = store[currentSelectedDate].indexOf(name);
-            if (idx > -1) store[currentSelectedDate].splice(idx, 1);
-            else store[currentSelectedDate].push(name);
-            localStorage.setItem(type === 'supp' ? 'gymApp_Supps' : 'gymApp_Workouts', JSON.stringify(store));
-            renderLists();
-        }
-
-        function startScanner() {
-            document.getElementById('scanner-section').classList.remove('hidden');
-            Quagga.init({
-                inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { facingMode: "environment" } },
-                decoder: { readers: ["ean_reader", "ean_8_reader"] }
-            }, (err) => { if(!err) Quagga.start(); });
-            Quagga.onDetected(d => { if(navigator.vibrate) navigator.vibrate(100); fetchProductInfo(d.codeResult.code); });
         }
 
         function stopScanner() { Quagga.stop(); document.getElementById('scanner-section').classList.add('hidden'); }
@@ -290,6 +285,23 @@
         function deleteMeal(i) { allData[currentSelectedDate].splice(i, 1); updateUI(); }
         function clearDay() { if(confirm("مسح سجل اليوم؟")) { allData[currentSelectedDate] = []; updateUI(); } }
         function editGoals() { let c = prompt("هدف السعرات:", goals.cal); if(c) { goals.cal = c; updateUI(); } }
+        function toggleWorkout(name) {
+            if (!workoutsDone[currentSelectedDate]) workoutsDone[currentSelectedDate] = [];
+            const idx = workoutsDone[currentSelectedDate].indexOf(name);
+            if (idx > -1) workoutsDone[currentSelectedDate].splice(idx, 1);
+            else if (workoutsDone[currentSelectedDate].length < 2) workoutsDone[currentSelectedDate].push(name);
+            localStorage.setItem('gymApp_Workouts', JSON.stringify(workoutsDone));
+            renderLists();
+        }
+        function toggleItem(name, type) {
+            let store = type === 'supp' ? suppsTaken : workoutsDone;
+            if (!store[currentSelectedDate]) store[currentSelectedDate] = [];
+            const idx = store[currentSelectedDate].indexOf(name);
+            if (idx > -1) store[currentSelectedDate].splice(idx, 1);
+            else store[currentSelectedDate].push(name);
+            localStorage.setItem(type === 'supp' ? 'gymApp_Supps' : 'gymApp_Workouts', JSON.stringify(store));
+            renderLists();
+        }
 
         updateUI();
     </script>
