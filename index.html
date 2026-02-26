@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>مدربي الرياضي - نسخة التثبيت الذكي</title>
+    <title>مدربي الرياضي - النسخة النهائية المستقرة</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
@@ -35,7 +35,7 @@
             <div id="cal-container" class="text-5xl font-black text-slate-800 transition-all">
                 <span id="total-calories">0</span>
             </div>
-            <div class="text-[10px] text-gray-400 mt-1 uppercase">Calories Consumed</div>
+            <div class="text-[10px] text-gray-400 mt-1 uppercase">السعرات اليومية المستهلكة</div>
         </div>
         <div class="flex gap-2 text-center">
             <div class="flex-1 bg-orange-50 p-2 rounded-xl border border-orange-100">
@@ -56,7 +56,7 @@
             <div class="laser"></div>
             <button onclick="stopScanner()" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full font-bold z-[60]">✕</button>
         </div>
-        <p class="text-center text-[10px] text-gray-400 mt-2">تم قفل العدسة لمنع التذبذب. ابعد الهاتف 15 سم.</p>
+        <p class="text-center text-[10px] text-gray-400 mt-2">وضع التثبيت نشط (زووم $2x$). ابعد الهاتف مسافة بسيطة.</p>
     </div>
 
     <div class="grid grid-cols-2 gap-4 mb-6">
@@ -71,21 +71,25 @@
     <div class="card p-5 min-h-[250px]">
         <div class="flex justify-between items-center mb-4 border-b pb-2">
             <h2 class="font-bold text-slate-700">سجل الوجبات</h2>
-            <button onclick="clearDay()" class="text-[10px] text-red-500 font-bold">مسح الكل</button>
+            <button onclick="clearDay()" class="text-[10px] text-red-500 font-bold underline uppercase">مسح السجل</button>
         </div>
         <ul id="meals-list" class="space-y-3"></ul>
+        <div id="empty-state" class="text-center py-10 text-gray-300 hidden">لا توجد وجبات مسجلة</div>
     </div>
 
     <div id="modal" class="hidden fixed inset-0 bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-6 z-[100]">
         <div class="bg-white p-7 rounded-[35px] w-full max-w-sm">
-            <h3 id="p-name" class="font-black text-lg mb-4 text-center text-slate-800">جاري التحليل...</h3>
+            <h3 id="p-name" class="font-black text-lg mb-4 text-center text-slate-800 leading-tight">جاري التحليل...</h3>
             <div class="grid grid-cols-2 gap-2 mb-6 text-center">
                 <div class="bg-gray-50 p-2 rounded-xl"><small class="block text-[9px] text-gray-400">Cal/100</small><b id="p-cal">0</b></div>
                 <div class="bg-orange-50 p-2 rounded-xl"><small class="block text-[9px] text-orange-400">Protein</small><b id="p-prot" class="text-orange-600">0</b></div>
             </div>
+            
+            <label class="block mb-2 text-xs font-bold text-gray-400 text-center">الكمية بـ (<span id="unit-label">غرام</span>):</label>
             <input type="number" id="amount-input" class="w-full border-2 border-slate-100 p-4 rounded-2xl mb-6 text-center text-3xl outline-none focus:border-blue-500" placeholder="0">
-            <button onclick="saveMeal()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg">تأكيد الإضافة</button>
-            <button onclick="closeModal()" class="w-full text-slate-400 mt-4 text-sm font-bold underline">إلغاء</button>
+            
+            <button onclick="saveMeal()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg">تأكيد الإضافة</button>
+            <button onclick="closeModal()" class="w-full text-slate-400 mt-4 text-sm font-bold">إلغاء</button>
         </div>
     </div>
 
@@ -102,40 +106,24 @@
             Quagga.init({
                 inputStream: { 
                     name: "Live", type: "LiveStream", target: document.querySelector('#interactive'),
-                    constraints: { 
-                        width: 1280, height: 720, 
-                        facingMode: "environment",
-                        aspectRatio: { min: 1.777, max: 1.778 } // قفل الأبعاد لـ 16:9
-                    } 
+                    constraints: { width: 1280, height: 720, facingMode: "environment", aspectRatio: { min: 1.777, max: 1.778 } } 
                 },
-                decoder: { 
-                    readers: ["ean_reader", "ean_8_reader"],
-                    multiple: false // منع قراءة عدة أكواد في وقت واحد للثبات
-                },
-                locate: true,
-                frequency: 10 // تقليل عدد مرات القراءة في الثانية لزيادة الدقة
+                decoder: { readers: ["ean_reader", "ean_8_reader"], multiple: false },
+                locate: true, frequency: 10
             }, (err) => { 
                 if(!err) {
                     Quagga.start();
-                    setTimeout(applyCameraLocks, 1000); // تطبيق القفل بعد ثانية من التشغيل
+                    setTimeout(applyCameraLocks, 1000);
                 }
             });
-
-            Quagga.onDetected(d => { fetchProductInfo(d.codeResult.code); });
+            Quagga.onDetected(d => { if(navigator.vibrate) navigator.vibrate(100); fetchProductInfo(d.codeResult.code); });
         }
 
         async function applyCameraLocks() {
             const track = Quagga.CameraAccess.getActiveTrack();
             if (track && typeof track.getCapabilities === 'function') {
                 const caps = track.getCapabilities();
-                const constraints = {};
-                
-                // تثبيت الزووم عند 2x لمنع تبديل العدسات المزعج
-                if (caps.zoom) constraints.zoom = 2.0;
-                // محاولة قفل التركيز
-                if (caps.focusMode && caps.focusMode.includes('continuous')) constraints.focusMode = 'continuous';
-                
-                try { await track.applyConstraints({ advanced: [constraints] }); } catch(e) { console.error(e); }
+                if (caps.zoom) track.applyConstraints({ advanced: [{ zoom: 2.0 }] });
             }
         }
 
@@ -146,7 +134,9 @@
                     if(d.status === 1) {
                         let p = d.product;
                         let n = p.nutriments;
+                        // ذكاء تحديد الوحدة (سوائل أم صلب)
                         let isLiquid = p.serving_quantity_unit === 'ml' || p.product_name_de?.toLowerCase().includes('wasser') || p.product_name_de?.toLowerCase().includes('saft');
+                        
                         tempProd = {
                             name: p.product_name_de || p.product_name || "منتج " + code,
                             cal100: n['energy-kcal_100g'] || 0,
@@ -158,6 +148,7 @@
                         document.getElementById('p-name').innerText = tempProd.name;
                         document.getElementById('p-cal').innerText = tempProd.cal100;
                         document.getElementById('p-prot').innerText = tempProd.prot100;
+                        document.getElementById('unit-label').innerText = tempProd.unit;
                     } else { alert("عذراً، المنتج غير موجود."); closeModal(); }
                 });
         }
@@ -178,15 +169,23 @@
             let meals = allData[currentSelectedDate] || [];
             let totals = { cal: 0, prot: 0, carb: 0, fat: 0 };
             const list = document.getElementById('meals-list');
+            const emptyState = document.getElementById('empty-state');
+            
             list.innerHTML = '';
+            if(meals.length === 0) emptyState.classList.remove('hidden');
+            else emptyState.classList.add('hidden');
+
             meals.forEach((m, i) => {
                 totals.cal += m.cal; totals.prot += m.prot; totals.carb += m.carb; totals.fat += m.fat;
+                // عرض لتر إذا تجاوز 1000 مللتر
+                let amountShow = m.unit === 'مللتر' && m.amount >= 1000 ? (m.amount/1000).toFixed(1) + ' لتر' : m.amount + ' ' + m.unit;
+                
                 list.innerHTML += `
                     <li class="flex justify-between items-center p-3 bg-white border border-slate-50 rounded-2xl">
-                        <div class="flex flex-col"><span class="font-bold text-xs">${m.name}</span><span class="text-[10px] text-gray-400">${m.amount} ${m.unit}</span></div>
+                        <div class="flex flex-col"><span class="font-bold text-xs">${m.name}</span><span class="text-[10px] text-gray-400">${amountShow}</span></div>
                         <div class="flex items-center gap-3">
                             <div class="text-left font-black text-blue-600 text-[10px]">${Math.round(m.cal)} Cal<br><span class="text-orange-400">P: ${Math.round(m.prot)}g</span></div>
-                            <button onclick="deleteMeal(${i})" class="text-slate-200 hover:text-red-400">✕</button>
+                            <button onclick="deleteMeal(${i})" class="text-slate-200 hover:text-red-400 transition-all p-1">✕</button>
                         </div>
                     </li>`;
             });
@@ -194,17 +193,21 @@
             document.getElementById('total-protein').innerText = Math.round(totals.prot);
             document.getElementById('total-carbs').innerText = Math.round(totals.carb);
             document.getElementById('total-fat').innerText = Math.round(totals.fat);
+            
+            if(totals.cal > goals.cal) document.getElementById('cal-container').classList.add('over-goal');
+            else document.getElementById('cal-container').classList.remove('over-goal');
+
             localStorage.setItem('gymApp_Data', JSON.stringify(allData));
         }
 
-        function deleteMeal(i) { if(confirm("حذف؟")) { allData[currentSelectedDate].splice(i, 1); updateUI(); } }
-        function clearDay() { if(confirm("مسح الكل؟")) { allData[currentSelectedDate] = []; updateUI(); } }
+        function deleteMeal(i) { if(confirm("حذف هذه الوجبة؟")) { allData[currentSelectedDate].splice(i, 1); updateUI(); } }
+        function clearDay() { if(confirm("مسح السجل بالكامل؟")) { allData[currentSelectedDate] = []; updateUI(); } }
         function stopScanner() { Quagga.stop(); document.getElementById('scanner-section').classList.add('hidden'); }
         function showModal(m) { if(m) document.getElementById('p-name').innerText = m; document.getElementById('modal').classList.remove('hidden'); }
         function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('amount-input').value = ''; }
         function changeDate() { currentSelectedDate = document.getElementById('date-picker').value; updateUI(); }
         function showManualAdd() { let n = prompt("الاسم:"); let c = prompt("السعرات/100:"); if(n && c) { tempProd = {name:n, cal100:c, prot100:0, carb100:0, fat100:0, unit:'غرام'}; showModal(); } }
-        function editGoals() { let c = prompt("الهدف الجديد:", goals.cal); if(c) { goals.cal = c; updateUI(); } }
+        function editGoals() { let c = prompt("هدفك الجديد للسعرات:", goals.cal); if(c) { goals.cal = c; updateUI(); } }
 
         updateUI();
     </script>
