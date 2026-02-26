@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>مدربي الرياضي - نسخة التمرين المطورة</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💪</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💪</text></svg>">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
@@ -116,7 +123,6 @@
         let tempProd = { unit: 'غرام', servingWeight: 100 };
 
         const MY_SUPPS = ["فيتامين C", "امينو 2222", "Mk-677", "ماغنيسيوم", "اوميجا 3", "جينسينج", "D3+K2", "كرياتين"];
-        // القائمة المحدثة بالخيارات الجديدة
         const MY_WORKOUTS = ["Push", "Pull", "Leg", "صدر + تراي", "ضهر + باي", "اكتاف + بطن", "رجلين", "كارديو ٢٠", "كارديو ٣٠", "كارديو ٤٠", "راحة"];
 
         document.getElementById('date-picker').value = currentSelectedDate;
@@ -139,16 +145,14 @@
             });
         }
 
-        // دالة مخصصة للتمارين للتحكم في عدد الاختيارات (2 كحد أقصى)
         function toggleWorkout(name) {
             if (!workoutsDone[currentSelectedDate]) workoutsDone[currentSelectedDate] = [];
             const index = workoutsDone[currentSelectedDate].indexOf(name);
-            
             if (index > -1) {
                 workoutsDone[currentSelectedDate].splice(index, 1);
             } else {
                 if (workoutsDone[currentSelectedDate].length >= 2) {
-                    alert("عذراً، يمكنك اختيار تمرينين فقط في اليوم الواحد!");
+                    alert("يمكنك اختيار تمرينين فقط في اليوم الواحد!");
                     return;
                 }
                 workoutsDone[currentSelectedDate].push(name);
@@ -161,16 +165,10 @@
         function toggleItem(name, type) {
             let storage = type === 'supp' ? suppsTaken : workoutsDone;
             let key = type === 'supp' ? 'gymApp_Supps' : 'gymApp_Workouts';
-
             if (!storage[currentSelectedDate]) storage[currentSelectedDate] = [];
             const index = storage[currentSelectedDate].indexOf(name);
-            
             if (index > -1) storage[currentSelectedDate].splice(index, 1);
-            else {
-                storage[currentSelectedDate].push(name);
-                if (navigator.vibrate) navigator.vibrate(40);
-            }
-            
+            else { storage[currentSelectedDate].push(name); if (navigator.vibrate) navigator.vibrate(40); }
             localStorage.setItem(key, JSON.stringify(storage));
             renderLists();
         }
